@@ -1,0 +1,1589 @@
+#pragma version 11
+#pragma typetrack false
+
+// algopy.arc4.ARC4Contract.approval_program() -> uint64:
+main:
+    intcblock 1 0 8 32 416
+    bytecblock 0x625f 0x705f 0x00 0x01 0x02 0x03 0x151f7c75 0x636f756e746572 0x615f 0x735f
+    // smart_contracts/bounty/contract.py:64-67
+    // # ─────────────────────────────────────────────
+    // #  MAIN CONTRACT
+    // # ─────────────────────────────────────────────
+    // class MicroBounty(ARC4Contract):
+    txn NumAppArgs
+    bz main___algopy_default_create@19
+    txn OnCompletion
+    !
+    assert
+    txn ApplicationID
+    assert
+    pushbytess 0x8df21337 0x5eb82a4e 0x0cfcc747 0xddd36bf3 0xefa25f01 0xb1ae4267 0x23156ee0 0x175e6ba5 0x8f1e7fba 0x09a8d387 // method "create_bounty(pay,uint8,uint64,uint8,uint8,uint8)uint64", method "apply_bounty(uint64)void", method "submit_work(uint64,byte[32],string,string)void", method "select_winner_and_pay(uint64,address,address,address)void", method "auto_refund(uint64)void", method "raise_dispute(uint64)void", method "cast_vote(uint64,bool)void", method "resolve_dispute(uint64,uint8,address,address,address)void", method "get_bounty(uint64)(address,uint64,uint8,uint64,uint8,uint8,uint8,bool,uint8)", method "get_github_link(uint64,address)string"
+    txna ApplicationArgs 0
+    match create_bounty apply_bounty submit_work select_winner_and_pay auto_refund raise_dispute cast_vote resolve_dispute get_bounty get_github_link
+    err
+
+main___algopy_default_create@19:
+    txn OnCompletion
+    !
+    txn ApplicationID
+    !
+    &&
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.create_bounty[routing]() -> void:
+create_bounty:
+    // smart_contracts/bounty/contract.py:78-81
+    // # ─────────────────────────────────────────
+    // #  1. CREATE BOUNTY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txn GroupIndex
+    intc_0 // 1
+    -
+    dupn 2
+    gtxns TypeEnum
+    intc_0 // pay
+    ==
+    assert // transaction type is pay
+    txna ApplicationArgs 1
+    dup
+    cover 2
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 3
+    dup
+    cover 3
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txna ApplicationArgs 4
+    dup
+    cover 4
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txna ApplicationArgs 5
+    dup
+    cover 5
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    // smart_contracts/bounty/contract.py:91
+    // assert payment_txn.receiver == Global.current_application_address, "Money must go to Escrow"
+    uncover 4
+    gtxns Receiver
+    global CurrentApplicationAddress
+    ==
+    assert // Money must go to Escrow
+    // smart_contracts/bounty/contract.py:92
+    // assert (split_1.native + split_2.native + split_3.native) == 100, "Splits must sum to 100"
+    uncover 2
+    btoi
+    uncover 2
+    btoi
+    swap
+    dig 1
+    +
+    uncover 2
+    btoi
+    dup
+    cover 4
+    +
+    pushint 100
+    ==
+    assert // Splits must sum to 100
+    // smart_contracts/bounty/contract.py:93
+    // assert deadline.native > Global.latest_timestamp, "Future deadline required"
+    swap
+    btoi
+    global LatestTimestamp
+    >
+    assert // Future deadline required
+    // smart_contracts/bounty/contract.py:95
+    // winner_count = UInt64(1)
+    intc_0 // 1
+    swap
+    // smart_contracts/bounty/contract.py:96
+    // if split_2.native > 0:
+    bz create_bounty_after_if_else@3
+    // smart_contracts/bounty/contract.py:97
+    // winner_count = UInt64(2)
+    pushint 2
+    bury 1
+
+create_bounty_after_if_else@3:
+    // smart_contracts/bounty/contract.py:98
+    // if split_3.native > 0:
+    dig 1
+    bz create_bounty_after_if_else@5
+    // smart_contracts/bounty/contract.py:99
+    // winner_count = UInt64(3)
+    pushint 3
+    bury 1
+
+create_bounty_after_if_else@5:
+    // smart_contracts/bounty/contract.py:101-102
+    // # Safely increment: if it doesn't exist, start from 0
+    // new_id = self.bounty_counter.get(UInt64(0)) + 1
+    intc_1 // 0
+    bytec 7 // 0x636f756e746572
+    app_global_get_ex
+    intc_1 // 0
+    cover 2
+    select
+    intc_0 // 1
+    +
+    // smart_contracts/bounty/contract.py:103
+    // self.bounty_counter.value = new_id
+    bytec 7 // 0x636f756e746572
+    dig 1
+    app_global_put
+    // smart_contracts/bounty/contract.py:107
+    // creator=Address(Txn.sender),
+    txn Sender
+    // smart_contracts/bounty/contract.py:108
+    // reward_amount=ARC4UInt64(payment_txn.amount),
+    dig 9
+    gtxns Amount
+    itob
+    // smart_contracts/bounty/contract.py:112
+    // winner_count=UInt8(winner_count),
+    dig 3
+    itob
+    dup
+    bitlen
+    intc_2 // 8
+    <=
+    assert // overflow
+    extract 7 1
+    // smart_contracts/bounty/contract.py:106-116
+    // self.bounties[ARC4UInt64(b_id)] = BountyState(
+    //     creator=Address(Txn.sender),
+    //     reward_amount=ARC4UInt64(payment_txn.amount),
+    //     max_applicants=max_applicants,
+    //     deadline=deadline,
+    //     applicant_count=UInt8(0),
+    //     winner_count=UInt8(winner_count),
+    //     payment_status=UInt8(STATUS_OPEN),
+    //     dispute_flag=Bool(False),
+    //     validator_count=UInt8(0),
+    // )
+    cover 2
+    concat
+    dig 9
+    concat
+    dig 8
+    concat
+    // smart_contracts/bounty/contract.py:111
+    // applicant_count=UInt8(0),
+    bytec_2 // 0x00
+    // smart_contracts/bounty/contract.py:106-116
+    // self.bounties[ARC4UInt64(b_id)] = BountyState(
+    //     creator=Address(Txn.sender),
+    //     reward_amount=ARC4UInt64(payment_txn.amount),
+    //     max_applicants=max_applicants,
+    //     deadline=deadline,
+    //     applicant_count=UInt8(0),
+    //     winner_count=UInt8(winner_count),
+    //     payment_status=UInt8(STATUS_OPEN),
+    //     dispute_flag=Bool(False),
+    //     validator_count=UInt8(0),
+    // )
+    concat
+    swap
+    concat
+    pushbytes 0x000000
+    concat
+    // smart_contracts/bounty/contract.py:106
+    // self.bounties[ARC4UInt64(b_id)] = BountyState(
+    swap
+    itob
+    bytec_0 // 0x625f
+    dig 1
+    concat
+    // smart_contracts/bounty/contract.py:106-116
+    // self.bounties[ARC4UInt64(b_id)] = BountyState(
+    //     creator=Address(Txn.sender),
+    //     reward_amount=ARC4UInt64(payment_txn.amount),
+    //     max_applicants=max_applicants,
+    //     deadline=deadline,
+    //     applicant_count=UInt8(0),
+    //     winner_count=UInt8(winner_count),
+    //     payment_status=UInt8(STATUS_OPEN),
+    //     dispute_flag=Bool(False),
+    //     validator_count=UInt8(0),
+    // )
+    uncover 2
+    box_put
+    // smart_contracts/bounty/contract.py:119
+    // self.payout_splits[bid_bytes + b"\x01"] = split_1
+    dup
+    bytec_3 // 0x01
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    dig 6
+    box_put
+    // smart_contracts/bounty/contract.py:120
+    // self.payout_splits[bid_bytes + b"\x02"] = split_2
+    dup
+    bytec 4 // 0x02
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    dig 5
+    box_put
+    // smart_contracts/bounty/contract.py:121
+    // self.payout_splits[bid_bytes + b"\x03"] = split_3
+    dup
+    bytec 5 // 0x03
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    dig 4
+    box_put
+    // smart_contracts/bounty/contract.py:78-81
+    // # ─────────────────────────────────────────
+    // #  1. CREATE BOUNTY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.apply_bounty[routing]() -> void:
+apply_bounty:
+    // smart_contracts/bounty/contract.py:125-128
+    // # ─────────────────────────────────────────
+    // #  2. APPLY FOR BOUNTY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/bounty/contract.py:130
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 1
+    concat
+    dup
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:131
+    // assert bounty.payment_status.native < UInt64(STATUS_SUBMITTED), "Applications closed"
+    dup
+    pushint 51
+    getbyte
+    pushint 2
+    <
+    assert // Applications closed
+    // smart_contracts/bounty/contract.py:132
+    // assert Global.latest_timestamp < bounty.deadline.native, "Deadline passed"
+    global LatestTimestamp
+    dig 1
+    extract 41 8
+    dig 2
+    pushint 41
+    extract_uint64
+    uncover 2
+    >
+    assert // Deadline passed
+    // smart_contracts/bounty/contract.py:133
+    // assert bounty.applicant_count.native < bounty.max_applicants.native, "Room full"
+    dig 1
+    pushint 49
+    getbyte
+    dig 2
+    extract 40 1
+    dig 3
+    pushint 40
+    getbyte
+    dig 2
+    >
+    assert // Room full
+    // smart_contracts/bounty/contract.py:135
+    // app_key = op.itob(bounty_id.native) + Txn.sender.bytes
+    uncover 5
+    btoi
+    itob
+    txn Sender
+    concat
+    // smart_contracts/bounty/contract.py:136
+    // assert not self.applicants.maybe(app_key)[1], "Already applied"
+    bytec 8 // 0x615f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    assert // Already applied
+    // smart_contracts/bounty/contract.py:138
+    // self.applicants[app_key] = Bool(True)
+    pushbytes 0x80
+    box_put
+    // smart_contracts/bounty/contract.py:141
+    // creator=bounty.creator,
+    dig 3
+    extract 0 32
+    // smart_contracts/bounty/contract.py:142
+    // reward_amount=bounty.reward_amount,
+    dig 4
+    extract 32 8
+    // smart_contracts/bounty/contract.py:145
+    // applicant_count=UInt8(bounty.applicant_count.native + 1),
+    uncover 3
+    intc_0 // 1
+    +
+    itob
+    dup
+    bitlen
+    intc_2 // 8
+    <=
+    assert // overflow
+    extract 7 1
+    // smart_contracts/bounty/contract.py:146
+    // winner_count=bounty.winner_count,
+    dig 5
+    extract 50 1
+    // smart_contracts/bounty/contract.py:148
+    // dispute_flag=bounty.dispute_flag,
+    dig 6
+    intc 4 // 416
+    getbit
+    bytec_2 // 0x00
+    intc_1 // 0
+    uncover 2
+    setbit
+    // smart_contracts/bounty/contract.py:149
+    // validator_count=bounty.validator_count
+    uncover 7
+    extract 53 1
+    // smart_contracts/bounty/contract.py:140-150
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator,
+    //     reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants,
+    //     deadline=bounty.deadline,
+    //     applicant_count=UInt8(bounty.applicant_count.native + 1),
+    //     winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_ACTIVE),
+    //     dispute_flag=bounty.dispute_flag,
+    //     validator_count=bounty.validator_count
+    // )
+    uncover 5
+    uncover 5
+    concat
+    uncover 5
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    // smart_contracts/bounty/contract.py:147
+    // payment_status=UInt8(STATUS_ACTIVE),
+    bytec_3 // 0x01
+    // smart_contracts/bounty/contract.py:140-150
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator,
+    //     reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants,
+    //     deadline=bounty.deadline,
+    //     applicant_count=UInt8(bounty.applicant_count.native + 1),
+    //     winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_ACTIVE),
+    //     dispute_flag=bounty.dispute_flag,
+    //     validator_count=bounty.validator_count
+    // )
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    box_put
+    // smart_contracts/bounty/contract.py:125-128
+    // # ─────────────────────────────────────────
+    // #  2. APPLY FOR BOUNTY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.submit_work[routing]() -> void:
+submit_work:
+    // smart_contracts/bounty/contract.py:152-155
+    // # ─────────────────────────────────────────
+    // #  3. SUBMIT WORK
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    intc_1 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    dup
+    uncover 2
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    txna ApplicationArgs 4
+    dup
+    intc_1 // 0
+    extract_uint16 // on error: invalid array length header
+    pushint 2
+    +
+    dig 1
+    len
+    ==
+    assert // invalid number of bytes for arc4.dynamic_array<arc4.uint8>
+    // smart_contracts/bounty/contract.py:163
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 5
+    concat
+    dup
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:164
+    // app_key = op.itob(bounty_id.native) + Txn.sender.bytes
+    uncover 6
+    btoi
+    itob
+    txn Sender
+    concat
+    // smart_contracts/bounty/contract.py:165
+    // assert self.applicants.maybe(app_key)[1], "Not an applicant"
+    bytec 8 // 0x615f
+    dig 1
+    concat
+    box_len
+    bury 1
+    assert // Not an applicant
+    // smart_contracts/bounty/contract.py:166
+    // assert bounty.payment_status.native == UInt64(STATUS_ACTIVE), "Not accepting submissions"
+    dig 1
+    pushint 51
+    getbyte
+    intc_0 // 1
+    ==
+    assert // Not accepting submissions
+    // smart_contracts/bounty/contract.py:169
+    // hunter=Address(Txn.sender),
+    txn Sender
+    // smart_contracts/bounty/contract.py:173
+    // submitted_at=ARC4UInt64(Global.latest_timestamp)
+    global LatestTimestamp
+    itob
+    // smart_contracts/bounty/contract.py:168-174
+    // self.submissions[app_key] = SubmissionData(
+    //     hunter=Address(Txn.sender),
+    //     deploy_link_hash=deploy_link_hash.copy(),
+    //     github_link=github_link,
+    //     commit_hash=commit_hash,
+    //     submitted_at=ARC4UInt64(Global.latest_timestamp)
+    // )
+    swap
+    uncover 8
+    concat
+    pushbytes 0x004c
+    concat
+    pushint 76
+    uncover 7
+    +
+    itob
+    extract 6 2
+    concat
+    swap
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    // smart_contracts/bounty/contract.py:168
+    // self.submissions[app_key] = SubmissionData(
+    bytec 9 // 0x735f
+    uncover 2
+    concat
+    // smart_contracts/bounty/contract.py:168-174
+    // self.submissions[app_key] = SubmissionData(
+    //     hunter=Address(Txn.sender),
+    //     deploy_link_hash=deploy_link_hash.copy(),
+    //     github_link=github_link,
+    //     commit_hash=commit_hash,
+    //     submitted_at=ARC4UInt64(Global.latest_timestamp)
+    // )
+    dup
+    box_del
+    pop
+    swap
+    box_put
+    // smart_contracts/bounty/contract.py:177
+    // creator=bounty.creator,
+    dup
+    extract 0 32
+    // smart_contracts/bounty/contract.py:178
+    // reward_amount=bounty.reward_amount,
+    dig 1
+    extract 32 8
+    // smart_contracts/bounty/contract.py:179
+    // max_applicants=bounty.max_applicants,
+    dig 2
+    extract 40 1
+    // smart_contracts/bounty/contract.py:180
+    // deadline=bounty.deadline,
+    dig 3
+    extract 41 8
+    // smart_contracts/bounty/contract.py:181
+    // applicant_count=bounty.applicant_count,
+    dig 4
+    extract 49 1
+    // smart_contracts/bounty/contract.py:182
+    // winner_count=bounty.winner_count,
+    dig 5
+    extract 50 1
+    // smart_contracts/bounty/contract.py:184
+    // dispute_flag=bounty.dispute_flag,
+    dig 6
+    intc 4 // 416
+    getbit
+    bytec_2 // 0x00
+    intc_1 // 0
+    uncover 2
+    setbit
+    // smart_contracts/bounty/contract.py:185
+    // validator_count=bounty.validator_count
+    uncover 7
+    extract 53 1
+    // smart_contracts/bounty/contract.py:176-186
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator,
+    //     reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants,
+    //     deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count,
+    //     winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_SUBMITTED),
+    //     dispute_flag=bounty.dispute_flag,
+    //     validator_count=bounty.validator_count
+    // )
+    uncover 7
+    uncover 7
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    // smart_contracts/bounty/contract.py:183
+    // payment_status=UInt8(STATUS_SUBMITTED),
+    bytec 4 // 0x02
+    // smart_contracts/bounty/contract.py:176-186
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator,
+    //     reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants,
+    //     deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count,
+    //     winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_SUBMITTED),
+    //     dispute_flag=bounty.dispute_flag,
+    //     validator_count=bounty.validator_count
+    // )
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    box_put
+    // smart_contracts/bounty/contract.py:152-155
+    // # ─────────────────────────────────────────
+    // #  3. SUBMIT WORK
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.select_winner_and_pay[routing]() -> void:
+select_winner_and_pay:
+    pushbytes ""
+    dup
+    // smart_contracts/bounty/contract.py:188-191
+    // # ─────────────────────────────────────────
+    // #  4. SELECT WINNER & PAY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    cover 2
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 3
+    dup
+    cover 2
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 4
+    dup
+    cover 2
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/bounty/contract.py:197
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 1
+    concat
+    dup
+    cover 2
+    box_get
+    swap
+    dup
+    cover 2
+    cover 3
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:198
+    // assert bounty.creator == Address(Txn.sender), "Unauthorized"
+    dup
+    extract 0 32
+    dup
+    cover 3
+    txn Sender
+    ==
+    assert // Unauthorized
+    // smart_contracts/bounty/contract.py:199
+    // assert bounty.payment_status.native == UInt64(STATUS_SUBMITTED), "No submissions"
+    dup
+    pushint 51
+    getbyte
+    pushint 2
+    ==
+    assert // No submissions
+    // smart_contracts/bounty/contract.py:200
+    // assert not bounty.dispute_flag.native, "In Dispute"
+    dup
+    intc 4 // 416
+    getbit
+    bytec_2 // 0x00
+    intc_1 // 0
+    uncover 2
+    setbit
+    intc_1 // 0
+    getbit
+    !
+    assert // In Dispute
+    // smart_contracts/bounty/contract.py:202
+    // bid_bytes = op.itob(bounty_id.native)
+    swap
+    btoi
+    itob
+    dup
+    cover 2
+    // smart_contracts/bounty/contract.py:203
+    // reward = bounty.reward_amount.native
+    dig 1
+    extract 32 8
+    cover 2
+    swap
+    intc_3 // 32
+    extract_uint64
+    swap
+    // smart_contracts/bounty/contract.py:205
+    // pct1 = self.payout_splits[bid_bytes + b"\x01"].native
+    bytec_3 // 0x01
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    // smart_contracts/bounty/contract.py:206
+    // if pct1 > 0:
+    bz select_winner_and_pay_after_if_else@4
+    // smart_contracts/bounty/contract.py:207
+    // itxn.Payment(receiver=w1.native, amount=(reward * pct1) // 100, fee=0).submit()
+    itxn_begin
+    dup2
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 9
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+select_winner_and_pay_after_if_else@4:
+    // smart_contracts/bounty/contract.py:209
+    // pct2 = self.payout_splits[bid_bytes + b"\x02"].native
+    dig 3
+    bytec 4 // 0x02
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    bury 13
+    // smart_contracts/bounty/contract.py:210
+    // if pct2 > 0:
+    bz select_winner_and_pay_after_if_else@7
+    // smart_contracts/bounty/contract.py:211
+    // itxn.Payment(receiver=w2.native, amount=(reward * pct2) // 100, fee=0).submit()
+    itxn_begin
+    dig 1
+    dig 12
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 8
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+select_winner_and_pay_after_if_else@7:
+    // smart_contracts/bounty/contract.py:213
+    // pct3 = self.payout_splits[bid_bytes + b"\x03"].native
+    dig 3
+    bytec 5 // 0x03
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    bury 12
+    // smart_contracts/bounty/contract.py:214
+    // if pct3 > 0:
+    bz select_winner_and_pay_after_if_else@10
+    // smart_contracts/bounty/contract.py:215
+    // itxn.Payment(receiver=w3.native, amount=(reward * pct3) // 100, fee=0).submit()
+    itxn_begin
+    dig 1
+    dig 11
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 7
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+select_winner_and_pay_after_if_else@10:
+    // smart_contracts/bounty/contract.py:219
+    // max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    dig 5
+    dup
+    extract 40 1
+    dig 1
+    extract 41 8
+    // smart_contracts/bounty/contract.py:220
+    // applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    dig 2
+    extract 49 1
+    uncover 3
+    extract 50 1
+    // smart_contracts/bounty/contract.py:217-222
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator, reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_PAID), dispute_flag=Bool(False), validator_count=UInt8(0)
+    // )
+    dig 8
+    dig 7
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    pushbytes 0x040000
+    concat
+    dig 7
+    swap
+    box_put
+    // smart_contracts/bounty/contract.py:188-191
+    // # ─────────────────────────────────────────
+    // #  4. SELECT WINNER & PAY
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.auto_refund[routing]() -> void:
+auto_refund:
+    // smart_contracts/bounty/contract.py:224-227
+    // # ─────────────────────────────────────────
+    // #  5. AUTO REFUND
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/bounty/contract.py:229
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    swap
+    concat
+    dup
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:230
+    // assert Global.latest_timestamp > bounty.deadline.native, "Time not up"
+    global LatestTimestamp
+    dig 1
+    extract 41 8
+    dig 2
+    pushint 41
+    extract_uint64
+    uncover 2
+    <
+    assert // Time not up
+    // smart_contracts/bounty/contract.py:231
+    // assert bounty.payment_status.native < UInt64(STATUS_SUBMITTED), "Work already submitted"
+    dig 1
+    pushint 51
+    getbyte
+    pushint 2
+    <
+    assert // Work already submitted
+    // smart_contracts/bounty/contract.py:233
+    // itxn.Payment(receiver=bounty.creator.native, amount=bounty.reward_amount.native, fee=0).submit()
+    itxn_begin
+    dig 1
+    extract 0 32
+    dig 2
+    extract 32 8
+    dig 3
+    intc_3 // 32
+    extract_uint64
+    itxn_field Amount
+    dig 1
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+    // smart_contracts/bounty/contract.py:237
+    // max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    dig 3
+    extract 40 1
+    // smart_contracts/bounty/contract.py:238
+    // applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    dig 4
+    extract 49 1
+    uncover 5
+    extract 50 1
+    // smart_contracts/bounty/contract.py:235-240
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator, reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_REFUNDED), dispute_flag=Bool(False), validator_count=UInt8(0)
+    // )
+    uncover 4
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    pushbytes 0x060000
+    concat
+    box_put
+    // smart_contracts/bounty/contract.py:224-227
+    // # ─────────────────────────────────────────
+    // #  5. AUTO REFUND
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.raise_dispute[routing]() -> void:
+raise_dispute:
+    // smart_contracts/bounty/contract.py:242-245
+    // # ─────────────────────────────────────────
+    // #  6. RAISE DISPUTE
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/bounty/contract.py:247
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    swap
+    concat
+    dup
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:248
+    // assert bounty.creator == Address(Txn.sender), "Only creator can raise dispute"
+    dup
+    extract 0 32
+    dup
+    txn Sender
+    ==
+    assert // Only creator can raise dispute
+    // smart_contracts/bounty/contract.py:249
+    // assert bounty.payment_status.native == UInt64(STATUS_SUBMITTED), "Can only dispute after submission"
+    dig 1
+    pushint 51
+    getbyte
+    pushint 2
+    ==
+    assert // Can only dispute after submission
+    // smart_contracts/bounty/contract.py:250
+    // assert not bounty.dispute_flag.native, "Already disputed"
+    dig 1
+    intc 4 // 416
+    getbit
+    bytec_2 // 0x00
+    intc_1 // 0
+    uncover 2
+    setbit
+    intc_1 // 0
+    getbit
+    !
+    assert // Already disputed
+    // smart_contracts/bounty/contract.py:253
+    // creator=bounty.creator, reward_amount=bounty.reward_amount,
+    dig 1
+    extract 32 8
+    // smart_contracts/bounty/contract.py:254
+    // max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    dig 2
+    extract 40 1
+    dig 3
+    extract 41 8
+    // smart_contracts/bounty/contract.py:255
+    // applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    dig 4
+    extract 49 1
+    dig 5
+    extract 50 1
+    // smart_contracts/bounty/contract.py:256
+    // payment_status=UInt8(STATUS_DISPUTED), dispute_flag=Bool(True), validator_count=bounty.validator_count
+    uncover 6
+    extract 53 1
+    // smart_contracts/bounty/contract.py:252-257
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator, reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_DISPUTED), dispute_flag=Bool(True), validator_count=bounty.validator_count
+    // )
+    uncover 6
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    pushbytes 0x0580
+    concat
+    swap
+    concat
+    box_put
+    // smart_contracts/bounty/contract.py:242-245
+    // # ─────────────────────────────────────────
+    // #  6. RAISE DISPUTE
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.cast_vote[routing]() -> void:
+cast_vote:
+    // smart_contracts/bounty/contract.py:259-262
+    // # ─────────────────────────────────────────
+    // #  7. CAST VOTE (Validators)
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.bool
+    // smart_contracts/bounty/contract.py:264
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 2
+    concat
+    dup
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:265
+    // assert bounty.payment_status.native == UInt64(STATUS_DISPUTED), "Not in dispute"
+    dup
+    extract 51 1
+    dig 1
+    pushint 51
+    getbyte
+    pushint 5
+    ==
+    assert // Not in dispute
+    // smart_contracts/bounty/contract.py:267
+    // vote_key = op.itob(bounty_id.native) + Txn.sender.bytes
+    uncover 4
+    btoi
+    itob
+    txn Sender
+    concat
+    // smart_contracts/bounty/contract.py:268
+    // assert not self.validator_votes.maybe(vote_key)[1], "Already voted"
+    pushbytes 0x765f
+    swap
+    concat
+    dup
+    box_len
+    bury 1
+    !
+    assert // Already voted
+    // smart_contracts/bounty/contract.py:270
+    // self.validator_votes[vote_key] = vote
+    uncover 4
+    box_put
+    // smart_contracts/bounty/contract.py:273
+    // creator=bounty.creator, reward_amount=bounty.reward_amount,
+    dig 1
+    extract 0 32
+    dig 2
+    extract 32 8
+    // smart_contracts/bounty/contract.py:274
+    // max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    dig 3
+    extract 40 1
+    dig 4
+    extract 41 8
+    // smart_contracts/bounty/contract.py:275
+    // applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    dig 5
+    extract 49 1
+    dig 6
+    extract 50 1
+    // smart_contracts/bounty/contract.py:276
+    // payment_status=bounty.payment_status, dispute_flag=bounty.dispute_flag,
+    dig 7
+    intc 4 // 416
+    getbit
+    bytec_2 // 0x00
+    intc_1 // 0
+    uncover 2
+    setbit
+    // smart_contracts/bounty/contract.py:277
+    // validator_count=UInt8(bounty.validator_count.native + 1)
+    uncover 8
+    pushint 53
+    getbyte
+    intc_0 // 1
+    +
+    itob
+    dup
+    bitlen
+    intc_2 // 8
+    <=
+    assert // overflow
+    extract 7 1
+    // smart_contracts/bounty/contract.py:272-278
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator, reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    //     payment_status=bounty.payment_status, dispute_flag=bounty.dispute_flag,
+    //     validator_count=UInt8(bounty.validator_count.native + 1)
+    // )
+    uncover 7
+    uncover 7
+    concat
+    uncover 6
+    concat
+    uncover 5
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    box_put
+    // smart_contracts/bounty/contract.py:259-262
+    // # ─────────────────────────────────────────
+    // #  7. CAST VOTE (Validators)
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.resolve_dispute[routing]() -> void:
+resolve_dispute:
+    pushbytes ""
+    dupn 3
+    // smart_contracts/bounty/contract.py:280-283
+    // # ─────────────────────────────────────────
+    // #  8. RESOLVE DISPUTE
+    // # ─────────────────────────────────────────
+    // @abimethod
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_0 // 1
+    ==
+    assert // invalid number of bytes for arc4.uint8
+    txna ApplicationArgs 3
+    dup
+    cover 3
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 4
+    dup
+    cover 3
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    txna ApplicationArgs 5
+    dup
+    cover 3
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/bounty/contract.py:290
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 2
+    concat
+    dup
+    cover 3
+    box_get
+    swap
+    dup
+    cover 2
+    cover 4
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:291
+    // assert bounty.payment_status.native == UInt64(STATUS_DISPUTED), "No active dispute"
+    dup
+    pushint 51
+    getbyte
+    pushint 5
+    ==
+    assert // No active dispute
+    // smart_contracts/bounty/contract.py:292
+    // assert bounty.validator_count.native >= 5, "Requires 5 votes"
+    dup
+    extract 53 1
+    cover 3
+    dup
+    pushint 53
+    getbyte
+    pushint 5
+    >=
+    assert // Requires 5 votes
+    // smart_contracts/bounty/contract.py:294
+    // reward = bounty.reward_amount.native
+    dup
+    extract 32 8
+    cover 3
+    intc_3 // 32
+    extract_uint64
+    cover 2
+    // smart_contracts/bounty/contract.py:295
+    // bid_bytes = op.itob(bounty_id.native)
+    swap
+    btoi
+    itob
+    cover 2
+    // smart_contracts/bounty/contract.py:297
+    // if valid_votes.native >= 3:
+    btoi
+    pushint 3
+    >=
+    bz resolve_dispute_else_body@12
+    // smart_contracts/bounty/contract.py:298-299
+    // # VALID: 90% to winners (10% left in contract for validators to claim later)
+    // winner_pool = (reward * 90) // 100
+    pushint 90
+    *
+    pushint 100
+    /
+    bury 9
+    // smart_contracts/bounty/contract.py:301
+    // pct1 = self.payout_splits[bid_bytes + b"\x01"].native
+    dup
+    bytec_3 // 0x01
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    bury 13
+    // smart_contracts/bounty/contract.py:302
+    // if pct1 > 0:
+    bz resolve_dispute_after_if_else@5
+    // smart_contracts/bounty/contract.py:303
+    // itxn.Payment(receiver=w1.native, amount=(winner_pool * pct1) // 100, fee=0).submit()
+    itxn_begin
+    dig 8
+    dig 12
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 7
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+resolve_dispute_after_if_else@5:
+    // smart_contracts/bounty/contract.py:305
+    // pct2 = self.payout_splits[bid_bytes + b"\x02"].native
+    dup
+    bytec 4 // 0x02
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    bury 12
+    // smart_contracts/bounty/contract.py:306
+    // if pct2 > 0:
+    bz resolve_dispute_after_if_else@8
+    // smart_contracts/bounty/contract.py:307
+    // itxn.Payment(receiver=w2.native, amount=(winner_pool * pct2) // 100, fee=0).submit()
+    itxn_begin
+    dig 8
+    dig 11
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 6
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+resolve_dispute_after_if_else@8:
+    // smart_contracts/bounty/contract.py:309
+    // pct3 = self.payout_splits[bid_bytes + b"\x03"].native
+    dup
+    bytec 5 // 0x03
+    concat
+    bytec_1 // 0x705f
+    swap
+    concat
+    box_get
+    assert // check self.payout_splits entry exists
+    btoi
+    dup
+    bury 11
+    // smart_contracts/bounty/contract.py:310
+    // if pct3 > 0:
+    bz resolve_dispute_after_if_else@14
+    // smart_contracts/bounty/contract.py:311
+    // itxn.Payment(receiver=w3.native, amount=(winner_pool * pct3) // 100, fee=0).submit()
+    itxn_begin
+    dig 8
+    dig 10
+    *
+    pushint 100
+    /
+    itxn_field Amount
+    dig 5
+    itxn_field Receiver
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+
+resolve_dispute_after_if_else@14:
+    // smart_contracts/bounty/contract.py:317
+    // creator=bounty.creator, reward_amount=bounty.reward_amount,
+    dig 3
+    dup
+    extract 0 32
+    // smart_contracts/bounty/contract.py:318
+    // max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    dig 1
+    extract 40 1
+    dig 2
+    extract 41 8
+    // smart_contracts/bounty/contract.py:319
+    // applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    dig 3
+    extract 49 1
+    uncover 4
+    extract 50 1
+    // smart_contracts/bounty/contract.py:316-321
+    // self.bounties[bounty_id] = BountyState(
+    //     creator=bounty.creator, reward_amount=bounty.reward_amount,
+    //     max_applicants=bounty.max_applicants, deadline=bounty.deadline,
+    //     applicant_count=bounty.applicant_count, winner_count=bounty.winner_count,
+    //     payment_status=UInt8(STATUS_PAID), dispute_flag=Bool(False), validator_count=bounty.validator_count
+    // )
+    uncover 4
+    dig 6
+    concat
+    uncover 4
+    concat
+    uncover 3
+    concat
+    uncover 2
+    concat
+    swap
+    concat
+    pushbytes 0x0400
+    concat
+    dig 3
+    concat
+    dig 5
+    swap
+    box_put
+    // smart_contracts/bounty/contract.py:280-283
+    // # ─────────────────────────────────────────
+    // #  8. RESOLVE DISPUTE
+    // # ─────────────────────────────────────────
+    // @abimethod
+    intc_0 // 1
+    return
+
+resolve_dispute_else_body@12:
+    // smart_contracts/bounty/contract.py:313-314
+    // # FRAUD: Refund full amount to creator
+    // itxn.Payment(receiver=bounty.creator.native, amount=reward, fee=0).submit()
+    itxn_begin
+    dig 4
+    extract 0 32
+    itxn_field Receiver
+    itxn_field Amount
+    intc_0 // pay
+    itxn_field TypeEnum
+    intc_1 // 0
+    itxn_field Fee
+    itxn_submit
+    b resolve_dispute_after_if_else@14
+
+
+// smart_contracts.bounty.contract.MicroBounty.get_bounty[routing]() -> void:
+get_bounty:
+    // smart_contracts/bounty/contract.py:323-326
+    // # ─────────────────────────────────────────
+    // #  9. READONLY / GETTERS
+    // # ─────────────────────────────────────────
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    // smart_contracts/bounty/contract.py:328
+    // return self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    swap
+    concat
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:323-326
+    // # ─────────────────────────────────────────
+    // #  9. READONLY / GETTERS
+    // # ─────────────────────────────────────────
+    // @abimethod(readonly=True)
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return
+
+
+// smart_contracts.bounty.contract.MicroBounty.get_github_link[routing]() -> void:
+get_github_link:
+    // smart_contracts/bounty/contract.py:330
+    // @abimethod(readonly=True)
+    txna ApplicationArgs 1
+    dup
+    len
+    intc_2 // 8
+    ==
+    assert // invalid number of bytes for arc4.uint64
+    txna ApplicationArgs 2
+    dup
+    len
+    intc_3 // 32
+    ==
+    assert // invalid number of bytes for arc4.static_array<arc4.uint8, 32>
+    // smart_contracts/bounty/contract.py:332
+    // bounty = self.bounties[bounty_id].copy()
+    bytec_0 // 0x625f
+    dig 2
+    concat
+    box_get
+    assert // check self.bounties entry exists
+    // smart_contracts/bounty/contract.py:333
+    // assert bounty.payment_status.native == UInt64(STATUS_PAID), "Payment pending"
+    pushint 51
+    getbyte
+    pushint 4
+    ==
+    assert // Payment pending
+    // smart_contracts/bounty/contract.py:334
+    // sub_key = op.itob(bounty_id.native) + hunter.bytes
+    swap
+    btoi
+    itob
+    swap
+    concat
+    // smart_contracts/bounty/contract.py:335
+    // return self.submissions[sub_key].github_link
+    bytec 9 // 0x735f
+    swap
+    concat
+    dup
+    pushints 76 2
+    box_extract
+    btoi
+    pushint 2
+    +
+    pushint 76
+    swap
+    box_extract
+    // smart_contracts/bounty/contract.py:330
+    // @abimethod(readonly=True)
+    bytec 6 // 0x151f7c75
+    swap
+    concat
+    log
+    intc_0 // 1
+    return

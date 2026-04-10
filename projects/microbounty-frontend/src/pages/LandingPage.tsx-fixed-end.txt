@@ -1,0 +1,8 @@
+        <div className="max-w-7xl mx-auto border-t border-brand-outline-variant/20 pt-10 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] text-brand-outline/40 font-mono tracking-widest uppercase">
+          <p>© 2026 MicroBounty · All digital assets secured by Algorand.</p>
+          <p className="text-center md:text-right">Built by <span className="text-brand-text font-black">CodeTitan</span> · <span className="text-brand-primary font-bold">AlgoBharat Hack Series 3.0</span></p>
+        </div>
+      </footer>
+    </div>
+  );
+}
