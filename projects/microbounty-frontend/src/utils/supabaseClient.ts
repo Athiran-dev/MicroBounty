@@ -1,5 +1,69 @@
+// // ─────────────────────────────────────────────────────
+// // MicroBounty — Supabase Client Singleton
+// // ─────────────────────────────────────────────────────
+// // Creates a Supabase client that sends the connected
+// // wallet address via x-wallet-address header for RLS.
+// // ─────────────────────────────────────────────────────
+
+// import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+// const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+// const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+// if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+//   throw new Error(
+//     'Missing Supabase environment variables. ' +
+//     'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
+//   );
+// }
+
+// // Track current client + wallet to recreate on wallet change
+// let _client: SupabaseClient | null = null;
+// let _currentWallet = '';
+
+// /**
+//  * Get the Supabase client configured for the given wallet address.
+//  * The wallet is sent as a custom header used by RLS policies.
+//  *
+//  * Call this with the active wallet address from useWallet().
+//  * When the wallet changes, a new client is created automatically.
+//  *
+//  * @param walletAddress - The connected Algorand wallet address (optional)
+//  */
+// export function getSupabase(walletAddress?: string): SupabaseClient {
+//   const wallet = walletAddress || '';
+
+//   if (!_client || wallet !== _currentWallet) {
+//     _currentWallet = wallet;
+//     _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+//       global: {
+//         headers: wallet
+//           ? { 'x-wallet-address': wallet }
+//           : {},
+//       },
+//     });
+//   }
+
+//   return _client;
+// }
+
+// /**
+//  * Get the Supabase project URL (for calling Edge Functions directly)
+//  */
+// export function getSupabaseUrl(): string {
+//   return SUPABASE_URL;
+// }
+
+// /**
+//  * Get the Supabase anon key (for Edge Function authorization header)
+//  */
+// export function getSupabaseAnonKey(): string {
+//   return SUPABASE_ANON_KEY;
+// }
+
+
 // ─────────────────────────────────────────────────────
-// MicroBounty — Supabase Client Singleton (STABLE)
+// MicroBounty — Supabase Client Singleton (WSL FIX)
 // ─────────────────────────────────────────────────────
 // Creates a Supabase client that sends the connected
 // wallet address via x-wallet-address header for RLS.
@@ -7,16 +71,20 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// 🔥 HACKATHON HARDCODE: Bypassing .env because of WSL sync issues
-const SUPABASE_URL = "https://sditsitcwpjsxbxnzqtf.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkaXRzaXRjd3Bqc3hieG56cXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU5MzQzNjUsImV4cCI6MjA5MTUxMDM2NX0.GLkobr56jCt1FEOfVjF1gRtiEb8O-Vjfm1zbzU0ZRdA";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-// 🛡️ DUAL SINGLETON CACHE
-// We maintain exactly one anonymous client and one authenticated client per wallet address
-// to prevent the "Multiple GoTrueClient instances" warning.
-let _anonClient: SupabaseClient | null = null;
-let _authClient: SupabaseClient | null = null;
-let _currentAuthWallet = '';
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn(
+    'Missing Supabase environment variables. ' +
+    'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.'
+  );
+}
+
+
+// Track current client + wallet to recreate on wallet change
+let _client: SupabaseClient | null = null;
+let _currentWallet = '';
 
 /**
  * Get the Supabase client configured for the given wallet address.
@@ -25,31 +93,22 @@ let _currentAuthWallet = '';
 export function getSupabase(walletAddress?: string): SupabaseClient {
   const wallet = walletAddress || '';
 
-  // Case 1: Anonymous Request
-  if (!wallet) {
-    if (!_anonClient) {
-      console.log('🌐 [Supabase] Initializing singleton ANONYMOUS client');
-      _anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: { persistSession: false, detectSessionInUrl: false }
-      });
-    }
-    return _anonClient;
-  }
-
-  // Case 2: Authenticated Request (with wallet header)
-  if (!_authClient || wallet !== _currentAuthWallet) {
-    _currentAuthWallet = wallet;
-    console.log(`🌐 [Supabase] Initializing singleton AUTH client for wallet: ${wallet}`);
+  // Recreate client if it doesn't exist OR if the wallet has changed
+  if (!_client || wallet !== _currentWallet) {
+    _currentWallet = wallet;
     
-    _authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, detectSessionInUrl: false },
+    console.log(`🌐 [Supabase] Initializing client for wallet: ${wallet || 'Anonymous'}`);
+    
+    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: {
-        headers: { 'x-wallet-address': wallet }
+        headers: wallet
+          ? { 'x-wallet-address': wallet }
+          : {},
       },
     });
   }
 
-  return _authClient;
+  return _client;
 }
 
 /**
@@ -66,5 +125,5 @@ export function getSupabaseAnonKey(): string {
   return SUPABASE_ANON_KEY;
 }
 
-// Optional: Default export for standard usage
+// Optional: Default export if needed elsewhere
 export const supabase = getSupabase();
