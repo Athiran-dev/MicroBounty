@@ -18,7 +18,7 @@ export default function ConnectWalletModal({ isOpen, onClose }: ConnectWalletMod
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-brand-bg/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4"
             onClick={onClose}
           >
             <motion.div
@@ -26,17 +26,21 @@ export default function ConnectWalletModal({ isOpen, onClose }: ConnectWalletMod
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-panel w-full max-w-md p-6 flex flex-col gap-6"
+              className="bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] rounded-[32px] w-full max-w-md p-8 flex flex-col gap-8 shadow-2xl relative overflow-hidden"
             >
+              {/* Ambient Glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#6D28D9]/10 dark:bg-[#C4A1FF]/10 blur-[60px] -mr-16 -mt-16" />
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Connect Wallet</h2>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight italic">Connect_Wallet</h2>
                 <button
                   onClick={onClose}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-[#262A36] rounded-full transition-colors text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white"
                 >
-                  <X className="w-5 h-5 text-brand-muted" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
+
+              <p className="text-[10px] text-gray-400 dark:text-[#64748B] font-black uppercase tracking-[0.3em]">Select_Network_Provider</p>
 
               <div className="flex flex-col gap-3">
                 {wallets.map((wallet) => (
@@ -50,23 +54,23 @@ export default function ConnectWalletModal({ isOpen, onClose }: ConnectWalletMod
                         onClose();
                       }
                     }}
-                    className="flex items-center justify-between p-4 rounded-xl border border-brand-border bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-5 rounded-2xl border border-gray-100 dark:border-[#262A36] bg-gray-50/50 dark:bg-[#1A1D24]/50 hover:border-[#6D28D9] dark:hover:border-[#C4A1FF] hover:bg-white dark:hover:bg-[#1D212B] transition-all group relative overflow-hidden"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4 relative z-10">
                       <img
                         src={wallet.metadata.icon}
                         alt={`${wallet.metadata.name} icon`}
-                        className="w-8 h-8 rounded-md"
+                        className="w-10 h-10 rounded-xl"
                       />
-                      <span className="font-bold text-lg">{wallet.metadata.name}</span>
+                      <span className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-[#6D28D9] dark:group-hover:text-[#C4A1FF] transition-colors">{wallet.metadata.name}</span>
                     </div>
                     {wallet.isConnected ? (
-                      <span className="text-sm font-mono text-brand-success bg-brand-success/10 px-3 py-1 rounded-full border border-brand-success/20">
-                        Connected
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#059669] bg-[#059669]/10 px-3 py-1.5 rounded-lg border border-[#059669]/20 relative z-10">
+                        ACTIVE
                       </span>
                     ) : (
-                      <span className="text-sm border border-brand-primary text-brand-primary px-4 py-1.5 rounded-full font-bold">
-                        Connect
+                      <span className="text-[10px] border border-gray-200 dark:border-[#334155] text-gray-500 dark:text-[#94A3B8] px-4 py-1.5 rounded-lg font-black uppercase tracking-widest group-hover:border-[#6D28D9] dark:group-hover:border-[#C4A1FF] group-hover:text-[#6D28D9] dark:group-hover:text-[#C4A1FF] group-hover:bg-[#F3E8FF] dark:group-hover:bg-[#6D28D9]/10 transition-all relative z-10">
+                        LINK
                       </span>
                     )}
                   </button>

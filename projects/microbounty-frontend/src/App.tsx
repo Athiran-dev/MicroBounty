@@ -9,6 +9,12 @@ import CreateBountyPage from './pages/CreateBountyPage'
 import BountyDetailPage from './pages/BountyDetailPage'
 import SubmitWorkPage from './pages/SubmitWorkPage'
 import ProfilePage from './pages/ProfilePage'
+import AiAgentMarketplace from './pages/ai-agents/AiAgentMarketplace'
+import AiAgentProfile from './pages/ai-agents/AiAgentProfile'
+import RegisterAgent from './pages/ai-agents/RegisterAgent'
+import MyAgentsDashboard from './pages/ai-agents/MyAgentsDashboard'
+import LeaderboardPage from './pages/LeaderboardPage'
+import { ThemeProvider } from './context/ThemeContext'
 
 let supportedWallets: SupportedWallet[]
 if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
@@ -52,11 +58,12 @@ export default function App() {
   })
 
   return (
-    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-      <WalletProvider manager={walletManager}>
-        <BrowserRouter>
-          <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col font-sans">
-            <GlassNavbar />
+    <ThemeProvider>
+      <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
+        <WalletProvider manager={walletManager}>
+          <BrowserRouter>
+            <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#12141C] text-gray-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
+              <GlassNavbar />
             <main className="flex-1 flex flex-col relative w-full pt-20">
               <Routes>
                 <Route path="/" element={<LandingPage />} />
@@ -66,11 +73,19 @@ export default function App() {
                 <Route path="/bounty/:bounty_id/submit" element={<SubmitWorkPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/profile/:wallet_address" element={<ProfilePage />} />
+                <Route path="/leaderboard" element={<LeaderboardPage />} />
+                
+                {/* AI Agent Routes */}
+                <Route path="/ai-tasks" element={<AiAgentMarketplace />} />
+                <Route path="/ai-tasks/register" element={<RegisterAgent />} />
+                <Route path="/ai-tasks/my-agents" element={<MyAgentsDashboard />} />
+                <Route path="/ai-tasks/:agentId" element={<AiAgentProfile />} />
               </Routes>
             </main>
           </div>
-        </BrowserRouter>
-      </WalletProvider>
-    </SnackbarProvider>
+          </BrowserRouter>
+        </WalletProvider>
+      </SnackbarProvider>
+    </ThemeProvider>
   )
 }

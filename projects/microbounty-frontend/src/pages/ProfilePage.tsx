@@ -83,39 +83,39 @@ export default function ProfilePage() {
   const algoEarnedApprox = appliedBounties.filter(b => b.status === 'paid').reduce((acc, b) => acc + Number(b.reward_algo), 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 w-full">
+    <div className="max-w-7xl mx-auto px-4 py-32 w-full transition-colors duration-200">
       {/* Header Profile Stats */}
       <div className="glass p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/10 blur-[80px] rounded-full pointer-events-none"></div>
-        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-brand-primary to-brand-success p-1 glow-primary shrink-0">
-          <div className="w-full h-full bg-brand-surface rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold font-mono text-brand-text">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#6D28D9]/10 blur-[80px] rounded-full pointer-events-none"></div>
+        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#6D28D9] to-[#059669] p-1 shadow-lg shrink-0">
+          <div className="w-full h-full bg-white dark:bg-[#15171E] rounded-full flex items-center justify-center">
+            <span className="text-2xl font-bold font-mono text-gray-900 dark:text-white">
               {wallet_address?.substring(0, 2)}
             </span>
           </div>
         </div>
 
         <div className="flex-1 text-center md:text-left z-10 text-brand-text">
-          <h1 className="text-4xl font-display font-extrabold mb-2 tracking-tight text-white uppercase italic">
+          <h1 className="text-4xl font-display font-extrabold mb-2 tracking-tight text-gray-900 dark:text-white uppercase italic">
             {shortenAddress(wallet_address!, 8)}
           </h1>
-          <a href={`https://testnet.algoexplorer.io/address/${wallet_address}`} target="_blank" rel="noreferrer" className="text-sm text-brand-primary hover:underline">
+          <a href={`https://testnet.algoexplorer.io/address/${wallet_address}`} target="_blank" rel="noreferrer" className="text-sm text-[#6D28D9] hover:underline">
             View on AlgoExplorer
           </a>
 
           <div className="flex flex-wrap justify-center md:justify-start gap-6 mt-6">
-            <div className="flex items-center gap-2 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl">
-              <Briefcase className="w-5 h-5 text-slate-400" />
+            <div className="flex items-center gap-2 bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] px-4 py-2 rounded-xl">
+              <Briefcase className="w-5 h-5 text-gray-500 dark:text-[#94A3B8]" />
               <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Posted</p>
-                <p className="font-black text-lg text-white">{createdBounties.length}</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest font-bold">Posted</p>
+                <p className="font-black text-lg text-gray-900 dark:text-white">{createdBounties.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-slate-900 border border-white/10 px-4 py-2 rounded-xl">
-              <FileCode2 className="w-5 h-5 text-brand-primary" />
+            <div className="flex items-center gap-2 bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] px-4 py-2 rounded-xl">
+              <FileCode2 className="w-5 h-5 text-[#6D28D9] dark:text-[#C4A1FF]" />
               <div>
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Applied</p>
-                <p className="font-black text-lg text-white">{appliedBounties.length}</p>
+                <p className="text-[10px] text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest font-bold">Applied</p>
+                <p className="font-black text-lg text-gray-900 dark:text-white">{appliedBounties.length}</p>
               </div>
             </div>
             <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
@@ -136,22 +136,22 @@ export default function ProfilePage() {
           className={`pb-4 px-2 font-bold text-lg transition-colors relative ${activeTab === 'created' ? 'text-brand-text' : 'text-brand-text-dim hover:text-brand-text'}`}
         >
           Created Bounties
-          {activeTab === 'created' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary" />}
+          {activeTab === 'created' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6D28D9]" />}
         </button>
         <button 
           onClick={() => setActiveTab('applied')}
           className={`pb-4 px-2 font-bold text-lg transition-colors relative ${activeTab === 'applied' ? 'text-brand-text' : 'text-brand-text-dim hover:text-brand-text'}`}
         >
           Hunter History
-          {activeTab === 'applied' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary" />}
+          {activeTab === 'applied' && <motion.div layoutId="tab-indicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6D28D9]" />}
         </button>
       </div>
 
       {/* Grid */}
       {loading ? (
         <div className="grid md:grid-cols-3 gap-6 animate-pulse">
-          <div className="h-48 glass bg-white/5 rounded-xl"></div>
-          <div className="h-48 glass bg-white/5 rounded-xl"></div>
+          <div className="h-48 glass bg-white dark:bg-[#15171E] rounded-xl"></div>
+          <div className="h-48 glass bg-white dark:bg-[#15171E] rounded-xl"></div>
         </div>
       ) : activeTab === 'created' ? (
         createdBounties.length > 0 ? (

@@ -98,29 +98,43 @@ export default function ChatRoom({ bountyId }: ChatRoomProps) {
   if (!room) return null; // Not a member of the room
 
   return (
-    <div className="glass-panel border-white/5 flex flex-col h-[500px] overflow-hidden">
-      <div className="p-4 border-b border-brand-border bg-black/20 flex items-center gap-3">
-        <MessageSquare className="w-5 h-5 text-brand-primary" />
-        <h3 className="font-bold">Bounty Hunters Chat</h3>
-        <span className="ml-auto text-xs bg-white/10 px-2 py-1 rounded font-mono text-brand-muted">
-          ID: {shortenAddress(room.id)}
+    <div className="bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] rounded-3xl flex flex-col h-[600px] overflow-hidden shadow-sm">
+      <div className="p-5 border-b border-gray-100 dark:border-[#262A36] bg-gray-50/50 dark:bg-[#1A1D24]/50 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#F3E8FF] dark:bg-[#6D28D9]/10 flex items-center justify-center">
+            <MessageSquare className="w-5 h-5 text-[#6D28D9] dark:text-[#C4A1FF]" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-white">Bounty Hunters Chat</h3>
+            <p className="text-[10px] text-gray-400 dark:text-[#64748B] font-bold uppercase tracking-widest">Real-time Node Activity</p>
+          </div>
+        </div>
+        <span className="text-[10px] bg-gray-100 dark:bg-[#262A36] px-3 py-1.5 rounded-lg font-black text-gray-500 dark:text-[#94A3B8] border border-gray-200 dark:border-[#334155] tracking-widest">
+          NODE: {shortenAddress(room.id)}
         </span>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-brand-muted italic text-sm">
+          <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-[#64748B] italic text-sm gap-4">
+            <div className="w-16 h-16 rounded-full border-2 border-dashed border-gray-200 dark:border-[#262A36] flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 opacity-20" />
+            </div>
             No messages yet. Be the first to say hello!
           </div>
         ) : (
           messages.map((msg, i) => {
             const isMe = msg.sender_wallet === activeAddress;
             return (
-              <div key={msg.id || i} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                <span className="text-[10px] text-brand-muted font-mono mb-1 px-1">
-                  {isMe ? 'You' : shortenAddress(msg.sender_wallet)}
+              <div key={msg.id || i} className={`flex flex-col max-w-[85%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
+                <span className="text-[10px] text-gray-400 dark:text-[#64748B] font-black uppercase tracking-widest mb-1.5 px-1">
+                  {isMe ? 'Local Node (You)' : `Peer: ${shortenAddress(msg.sender_wallet)}`}
                 </span>
-                <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-brand-primary text-white rounded-tr-sm' : 'glass bg-white/5 text-brand-text border-white/5 rounded-tl-sm'}`}>
+                <div className={`px-5 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-sm ${
+                  isMe 
+                    ? 'bg-[#6D28D9] text-white rounded-tr-none' 
+                    : 'glass dark:bg-[#1A1D24]/80 text-gray-900 dark:text-white rounded-tl-none border border-gray-200 dark:border-[#262A36]'
+                }`}>
                   {msg.content}
                 </div>
               </div>
@@ -130,18 +144,18 @@ export default function ChatRoom({ bountyId }: ChatRoomProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSend} className="p-3 border-t border-brand-border bg-black/20 flex gap-2">
+      <form onSubmit={handleSend} className="p-4 border-t border-gray-100 dark:border-[#262A36] bg-gray-50 dark:bg-[#1A1D24] flex gap-3">
         <input 
           type="text" 
           value={inputData}
           onChange={(e) => setInputData(e.target.value)}
-          placeholder="Ask a question..."
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 focus:outline-none focus:border-brand-primary text-sm"
+          placeholder="Type your message..."
+          className="flex-1 bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] rounded-xl px-5 py-3 focus:outline-none focus:ring-2 focus:ring-[#6D28D9]/20 focus:border-[#6D28D9] text-gray-900 dark:text-white text-sm transition-all"
         />
         <button 
           type="submit" 
           disabled={!inputData.trim()}
-          className="bg-brand-primary hover:bg-blue-600 disabled:bg-brand-surface disabled:text-brand-muted p-2 rounded-xl transition-colors shrink-0"
+          className="bg-[#6D28D9] hover:bg-[#5B21B6] disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-all shadow-md shadow-[#6D28D9]/20"
         >
           <Send className="w-5 h-5" />
         </button>

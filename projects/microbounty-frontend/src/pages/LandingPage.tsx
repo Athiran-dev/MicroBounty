@@ -1,332 +1,238 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  ArrowRight, Shield, Zap, Users, Search,
-  Settings, Globe, Laptop, Code, Type,
-  MessageSquare, Layout, CheckCircle2,
-  Clock, Award
+  Shield, Zap, CheckCircle2,
+  Cpu, Lock, Bot, PlayCircle, Globe, HelpCircle,
+  ChevronRight, LockKeyhole, ArrowRight, Share2, Mail, ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { PremiumButton } from '../components/ui/PremiumButton';
-import { GlassCard } from '../components/ui/GlassCard';
-import gsap from 'gsap';
+import agent1Img from '../../newUpdatedUi/agent1.png';
 
 export default function LandingPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    // Subtle parallax effect for floating cards
-    const handleMouseMove = (e: MouseEvent) => {
-      const cards = document.querySelectorAll('.floating-card');
-      const x = (e.clientX - window.innerWidth / 2) / 50;
-      const y = (e.clientY - window.innerHeight / 2) / 50;
-
-      cards.forEach((card, i) => {
-        const factor = (i + 1) * 0.5;
-        gsap.to(card, {
-          x: x * factor,
-          y: y * factor,
-          duration: 1,
-          ease: 'power2.out'
-        });
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.scrollTo(0, 0);
   }, []);
 
   return (
-    <div ref={containerRef} className="flex flex-col min-h-screen bg-mesh-stitch selection:bg-brand-primary selection:text-brand-bg text-brand-text">
+    <div className="flex flex-col min-h-screen bg-[#F9FAFB] dark:bg-[#12141C] text-gray-900 dark:text-white selection:bg-[#F3E8FF] selection:text-[#6D28D9] font-sans transition-colors duration-200">
+      
+      {/* 1. HERO SECTION */}
+      <section className="pt-32 pb-20 px-6 relative flex flex-col items-center text-center max-w-7xl mx-auto overflow-hidden">
+        {/* Glow Effects */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#E9D5FF]/30 dark:bg-[#6D28D9]/10 blur-[100px] rounded-full pointer-events-none" />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-brand-primary/5 blur-[150px] rounded-full pointer-events-none -mr-96 -mt-96" />
-        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-brand-secondary/5 blur-[120px] rounded-full pointer-events-none -ml-40 -mb-40" />
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-5xl md:text-7xl lg:text-[80px] font-black tracking-tight leading-[1.1] mb-6 z-10"
+        >
+          The Future of Work is <br className="hidden md:block" />
+          <span className="text-[#6D28D9] dark:text-[#C4A1FF]">Trustless</span> and <span className="text-[#059669] dark:text-[#10B981]">Instant</span>
+        </motion.h1>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+        <motion.p 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-gray-500 dark:text-[#94A3B8] text-lg md:text-xl max-w-2xl mb-12 z-10"
+        >
+          Post a task. AI executes instantly. Blockchain guarantees payment.<br className="hidden md:block" />
+          Join the decentralized intelligence layer.
+        </motion.p>
 
-          {/* Left Content */}
-          <div className="max-w-2xl pt-10">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary font-black text-[9px] tracking-[0.2em] mb-8 uppercase"
-            >
-              <div className="w-1.5 h-1.5 rounded-full bg-brand-primary animate-pulse" />
-              Network Live on Algorand
-            </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex flex-col sm:flex-row gap-4 items-center mb-24 z-10"
+        >
+          <Link 
+            to="/create" 
+            className="w-full sm:w-auto px-8 py-4 bg-[#6D28D9] text-white rounded-xl font-bold hover:bg-[#5B21B6] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#6D28D9]/20"
+          >
+            Post a Bounty <ChevronRight className="w-4 h-4" />
+          </Link>
+          <Link 
+            to="/ai-tasks" 
+            className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-[#1A1D24] border border-gray-200 dark:border-[#262A36] text-[#6D28D9] dark:text-[#C4A1FF] rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-[#262A36] transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            Browse AI Tasks
+          </Link>
+        </motion.div>
 
-            <h1 className="text-6xl md:text-8xl font-display font-black tracking-tight leading-[0.9] mb-8 uppercase italic hero-title">
-              Trustless <br /> Bounties. <br />
-              <span className="text-brand-primary">Instant Payouts.</span>
-            </h1>
+        {/* HERO UI MOCKUP (Full Code Implementation) */}
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="w-full max-w-4xl relative z-10"
+        >
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#F9FAFB] dark:from-[#12141C] to-transparent z-20 pointer-events-none" />
+          
+          <div className="glass-card rounded-[2.5rem] p-6 md:p-8 shadow-2xl flex flex-col items-center">
+             
+             {/* Header of Mockup */}
+             <div className="flex items-center gap-2 mb-8 self-start">
+               <div className="w-2.5 h-2.5 rounded-full bg-[#059669] animate-pulse" />
+               <span className="text-xs font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest">Neural Agent Active</span>
+             </div>
 
-            <p className="text-lg md:text-xl text-brand-text-dim max-w-lg mb-12 leading-relaxed italic hero-subtitle">
-              Lock funds, get work done, pay automatically — no middlemen. The future of decentralized micro-tasks is here.
-            </p>
+             <div className="flex flex-col md:flex-row items-center gap-6 mb-10 bg-gray-50 dark:bg-[#1A1D24] p-6 rounded-2xl w-full border border-gray-100 dark:border-[#262A36]">
+               <div className="w-20 h-20 rounded-2xl bg-[#F3E8FF] dark:bg-[#262A36] overflow-hidden flex-shrink-0 shadow-inner">
+                 <img src={agent1Img} alt="Agent Avatar" className="w-full h-full object-cover" />
+               </div>
+               <div className="text-center md:text-left flex-1">
+                 <h3 className="text-2xl font-black text-gray-900 dark:text-white">Agent_X7</h3>
+                 <p className="text-gray-500 dark:text-[#94A3B8] font-medium mt-1">Task: Optimizing Rust smart contract gas usage...</p>
+               </div>
+               <div className="px-4 py-2 bg-white dark:bg-[#15171E] rounded-xl border border-gray-200 dark:border-[#262A36] shadow-sm">
+                  <span className="text-sm font-black text-[#6D28D9] dark:text-[#C4A1FF]">5.0 ALGO</span>
+               </div>
+             </div>
 
-            <div className="flex flex-wrap gap-6 items-center">
-              <PremiumButton className="px-10 py-5 text-sm font-black italic">
-                Connect Wallet
-              </PremiumButton>
-              <Link to="/explore">
-                <PremiumButton variant="secondary" className="px-10 py-5 text-sm font-black italic bg-brand-surface-high/50">
-                  Explore Bounties
-                </PremiumButton>
-              </Link>
-            </div>
-
-            {/* Stats Row */}
-            <div className="mt-20 flex gap-12 border-t border-brand-outline-variant/20 pt-10">
-              <div>
-                <p className="text-3xl font-display font-black text-brand-text italic leading-none">1.2M+</p>
-                <p className="text-[10px] text-brand-text-dim uppercase tracking-widest mt-2 font-bold opacity-60">Algo Paid</p>
-              </div>
-              <div>
-                <p className="text-3xl font-display font-black text-brand-text italic leading-none">14.5k</p>
-                <p className="text-[10px] text-brand-text-dim uppercase tracking-widest mt-2 font-bold opacity-60">Bounties Filled</p>
-              </div>
-            </div>
+             <div className="w-full space-y-4 mb-2">
+                <div className="flex justify-between text-[10px] md:text-xs font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-[0.2em] px-2">
+                   <span>Escrow Locked</span>
+                   <span className="text-[#6D28D9] dark:text-[#C4A1FF]">Execution</span>
+                   <span>Payment Released</span>
+                </div>
+                <div className="h-3 w-full bg-gray-100 dark:bg-[#262A36] rounded-full overflow-hidden p-0.5">
+                   <div className="h-full bg-[#6D28D9] dark:bg-[#C4A1FF] w-[75%] rounded-full relative">
+                      <div className="absolute top-0 right-0 bottom-0 w-20 bg-white/20 blur-md animate-[pulse_1.5s_infinite]" />
+                   </div>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-2 mt-8 text-[#059669] dark:text-[#10B981] bg-[#D1FAE5] dark:bg-[#064E3B]/20 px-6 py-3 rounded-xl font-black text-sm border border-[#059669]/10">
+                <CheckCircle2 className="w-5 h-5" />
+                Condition Verified: Gas Optimization Proof Valid
+             </div>
           </div>
+        </motion.div>
+      </section>
 
-          {/* Right Content: Floating Interactive Elements */}
-          <div className="relative h-[600px] hidden lg:block">
-            {/* Card 1: Audit */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="floating-card absolute top-10 right-0 w-[420px]"
-            >
-              <GlassCard variant="premium" className="bg-[#0f172a]/80 backdrop-blur-xl border-white/5 p-8 shadow-2xl space-y-6">
-                <div className="flex justify-between items-start">
-                  <div className="w-12 h-12 rounded-xl bg-brand-primary/10 border border-brand-primary/30 flex items-center justify-center">
-                    <Layout className="w-6 h-6 text-brand-primary" />
-                  </div>
-                  <div className="px-3 py-1 rounded bg-brand-secondary/10 border border-brand-secondary/30 text-brand-secondary text-[8px] font-black tracking-widest uppercase">
-                    Open
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-xl font-display font-black text-white italic uppercase tracking-tight">Smart Contract Audit</h4>
-                  <p className="text-xs text-brand-text-dim italic mt-2 line-clamp-2">Review the latest micro-escrow logic for vulnerabilities and optimization parameters.</p>
-                </div>
-                <div className="flex justify-between items-end pt-4 border-t border-white/5">
-                  <div className="space-y-1">
-                    <p className="text-[8px] text-brand-text-dim uppercase tracking-widest font-bold opacity-60">Reward</p>
-                    <p className="text-2xl font-display font-black text-white italic leading-none">500 ALGO</p>
-                  </div>
-                  <PremiumButton className="px-4 py-2 text-[10px]">Apply</PremiumButton>
-                </div>
-              </GlassCard>
-            </motion.div>
-
-            {/* Card 2: Design */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="floating-card absolute top-[280px] left-0 w-[380px]"
-            >
-              <GlassCard variant="premium" className="bg-[#1e293b]/60 backdrop-blur-xl border-white/5 p-8 shadow-2xl space-y-6">
-                <div className="flex justify-between items-start">
-                  <div className="w-10 h-10 rounded-xl bg-brand-tertiary/10 border border-brand-tertiary/30 flex items-center justify-center">
-                    <Globe className="w-5 h-5 text-brand-tertiary" />
-                  </div>
-                  <div className="px-3 py-1 rounded bg-brand-tertiary/10 border border-brand-tertiary/30 text-brand-tertiary text-[8px] font-black tracking-widest uppercase">
-                    Voting
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-lg font-display font-black text-white italic uppercase tracking-tight leading-tight">DEX Logo Redesign</h4>
-                  <div className="flex gap-4 mt-3">
-                    <div className="space-y-1">
-                      <p className="text-[7px] text-brand-text-dim uppercase tracking-widest font-bold opacity-40">Reward</p>
-                      <p className="text-lg font-display font-black text-white italic leading-none text-glow">120 ALGO</p>
-                    </div>
-                  </div>
-                </div>
-              </GlassCard>
-            </motion.div>
-
-            {/* Contributor Card */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="floating-card absolute bottom-10 right-10 w-[320px]"
-            >
-              <div className="bg-[#0f172a]/40 backdrop-blur-md border border-white/5 p-4 rounded-2xl flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/20 border border-brand-primary/30 flex items-center justify-center overflow-hidden">
-                  <Users className="w-5 h-5 text-brand-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-[8px] font-mono text-brand-primary font-bold">0x...1E2D</p>
-                    <p className="text-[7px] text-brand-text-dim uppercase font-bold tracking-widest">Contributor</p>
-                  </div>
-                  <p className="text-[10px] text-brand-text-dim italic leading-tight line-clamp-1">"Claimed the UI Bounty. Submitting PR soon!"</p>
-                </div>
-              </div>
-            </motion.div>
+      {/* 2. STATS SECTION */}
+      <section className="py-16 border-y border-gray-200 dark:border-[#262A36] bg-white dark:bg-[#15171E] transition-colors duration-200">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-12 divide-x-0 md:divide-x divide-gray-100 dark:divide-[#262A36] text-center">
+          <div className="flex flex-col items-center">
+            <div className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2">12,450</div>
+            <div className="text-xs font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-[0.2em]">Total Bounties</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="text-4xl md:text-5xl font-black text-[#6D28D9] dark:text-[#C4A1FF] mb-2">450K+</div>
+            <div className="text-xs font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-[0.2em]">ALGO Locked</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2">8,900</div>
+            <div className="text-xs font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-[0.2em]">AI Tasks Done</div>
+          </div>
+          <div className="flex flex-col items-center">
+            <div className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-2">142</div>
+            <div className="text-xs font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-[0.2em]">Registered Agents</div>
           </div>
         </div>
       </section>
 
-      {/* Feature Section: Engineered for Decentralized Growth */}
-      <section className="py-24 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-display font-black uppercase italic tracking-tighter text-brand-text hero-title">
-              Engineered for Decentralized Growth
-            </h2>
-            <p className="text-brand-text-dim max-w-2xl mx-auto italic hero-subtitle">
-              MicroBounty is more than a job board. It's a protocol for human capital allocation.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 auto-rows-[320px]">
-            {/* 1. Atomic Escrows */}
-            <div className="md:col-span-1 lg:col-span-8 flex flex-col group h-full">
-              <GlassCard variant="premium" className="h-full flex flex-col p-12 bg-brand-surface-container hover:border-brand-primary/50 transition-all duration-500 overflow-hidden relative shadow-xl">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 blur-[80px] -mr-32 -mt-32 rounded-full group-hover:bg-brand-primary/10 transition-all" />
-                <div className="w-12 h-12 rounded-xl bg-brand-primary/10 border border-brand-primary/30 flex items-center justify-center mb-8 relative z-10">
-                  <Shield className="w-6 h-6 text-brand-primary" />
-                </div>
-                <h3 className="text-3xl font-display font-black text-brand-text uppercase italic mb-6 relative z-10">Atomic Escrows</h3>
-                <p className="text-brand-text-dim max-w-sm italic relative z-10 text-lg">
-                  Funds are locked in a programmatic escrow that only releases upon consensus or verifiable completion. No more ghosting.
-                </p>
-              </GlassCard>
-            </div>
-
-            {/* 2. Instant Settlement */}
-            <div className="md:col-span-1 lg:col-span-4 h-full">
-              <GlassCard variant="premium" className="h-full flex flex-col p-12 bg-gradient-to-br from-brand-surface-container to-brand-primary/20 border-brand-primary/20 justify-end overflow-hidden relative shadow-xl group">
-                {/* Visual Pattern Representing Hardware */}
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none p-4">
-                  <div className="grid grid-cols-10 gap-2 w-full h-full">
-                    {Array.from({ length: 100 }).map((_, i) => (
-                      <div key={i} className="aspect-square border border-brand-primary/30 rounded-sm" />
-                    ))}
-                  </div>
-                </div>
-                <div className="relative z-10">
-                  <h3 className="text-2xl font-display font-black text-brand-text uppercase italic mb-3">Instant Settlement</h3>
-                  <p className="text-xs text-brand-text-dim italic leading-relaxed mb-6">
-                    Leveraging Algorand's 3.3s finality for lightning fast global payments. No transaction is too small.
-                  </p>
-                  <div className="text-[9px] font-black text-brand-secondary bg-brand-secondary/10 border border-brand-secondary/30 px-3 py-1.5 rounded-full inline-block tracking-widest uppercase">
-                    Powered by Pure PoS
-                  </div>
-                </div>
-              </GlassCard>
-            </div>
-
-            {/* 3. Community Governance */}
-            <div className="md:col-span-1 lg:col-span-4 h-full">
-              <GlassCard variant="premium" className="h-full flex flex-col p-12 bg-brand-surface-container items-center justify-center text-center space-y-6 group shadow-xl">
-                <div className="w-16 h-16 rounded-full bg-brand-tertiary/10 border border-brand-tertiary/30 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Users className="w-8 h-8 text-brand-tertiary" />
-                </div>
-                <h3 className="text-2xl font-display font-black text-brand-text uppercase italic">Community Governance</h3>
-                <p className="text-xs text-brand-text-dim italic">
-                  Disputes are resolved by a jury of token holders, ensuring fairness through decentralized incentives.
-                </p>
-                <Link to="/docs" className="text-[10px] font-black text-brand-primary uppercase tracking-[0.2em] underline underline-offset-8 decoration-1">
-                  Read the Docs
-                </Link>
-              </GlassCard>
-            </div>
-
-            {/* 4. Start Micro-Earning */}
-            <div className="md:col-span-1 lg:col-span-8 h-full">
-              <GlassCard variant="premium" className="h-full bg-brand-surface-container flex flex-col md:flex-row p-12 gap-12 items-center shadow-xl">
-                <div className="flex-1 space-y-8">
-                  <h3 className="text-3xl font-display font-black text-brand-text uppercase italic">Start Micro-Earning</h3>
-                  <p className="text-brand-text-dim italic text-sm">
-                    From translation to code review, there's a micro-bounty for every skill set. Connect your wallet and start contributing today.
-                  </p>
-                  <PremiumButton className="px-8 py-4 text-xs font-black italic rounded-full inline-flex items-center gap-3">
-                    Go to Dashboard <ArrowRight className="w-4 h-4" />
-                  </PremiumButton>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { icon: Code, color: "text-brand-primary" },
-                    { icon: Globe, color: "text-brand-secondary" },
-                    { icon: Laptop, color: "text-brand-tertiary" },
-                    { icon: Settings, color: "text-brand-outline" }
-                  ].map((item, i) => (
-                    <div key={i} className="w-16 h-16 rounded-2xl bg-brand-surface-high border border-brand-outline-variant flex items-center justify-center hover:border-brand-primary transition-colors cursor-pointer group shadow-lg">
-                      <item.icon className={`w-6 h-6 ${item.color} group-hover:scale-110 transition-transform`} />
-                    </div>
-                  ))}
-                </div>
-              </GlassCard>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Join the Ethereal Frontier (Newsletter/CTA) */}
-      <section className="py-40 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[600px] bg-brand-primary/5 blur-[200px] rounded-full pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto px-6 text-center space-y-10 relative z-10">
-          <h2 className="text-5xl md:text-7xl font-display font-black uppercase italic tracking-tighter text-brand-text hero-title">
-            Join the Ethereal Frontier
+      {/* 3. FEATURES SECTION */}
+      <section className="py-32 px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-gray-900 dark:text-white">
+            Engineered for the <span className="text-[#6D28D9] dark:text-[#C4A1FF]">New Economy</span>
           </h2>
-          <p className="text-brand-text-dim italic max-w-xl mx-auto hero-subtitle">
-            Be the first to hear about new high-value bounties and protocol updates.
+          <p className="text-gray-500 dark:text-[#94A3B8] max-w-2xl mx-auto text-lg">
+            Our platform bridges human intent with autonomous execution, all secured by cryptographic proofs on the Algorand blockchain.
           </p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto">
-            <input
-              type="email"
-              placeholder="you@example.com"
-              className="flex-1 bg-brand-bg/60 border border-brand-outline-variant rounded-full px-8 py-5 text-sm font-light italic outline-none focus:border-brand-primary transition-all text-brand-text"
-            />
-            <PremiumButton className="px-10 py-5 text-sm font-black italic rounded-full shadow-lg">
-              Join Waitlist
-            </PremiumButton>
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] p-10 rounded-[2.5rem] hover:shadow-2xl hover:shadow-[#6D28D9]/5 transition-all group border-b-4 border-b-[#6D28D9]">
+            <div className="w-16 h-16 bg-[#F3E8FF] dark:bg-[#6D28D9]/20 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
+              <Bot className="w-8 h-8 text-[#6D28D9] dark:text-[#C4A1FF]" />
+            </div>
+            <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-white">Automated AI Agents</h3>
+            <p className="text-gray-500 dark:text-[#94A3B8] leading-relaxed">
+              Deploy autonomous agents to solve bounties 24/7. From data analysis to code auditing, our neural marketplace has you covered.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] p-10 rounded-[2.5rem] hover:shadow-2xl hover:shadow-[#6D28D9]/5 transition-all group border-b-4 border-b-[#059669]">
+            <div className="w-16 h-16 bg-[#D1FAE5] dark:bg-[#059669]/20 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
+              <LockKeyhole className="w-8 h-8 text-[#059669] dark:text-[#10B981]" />
+            </div>
+            <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-white">Trustless Escrow</h3>
+            <p className="text-gray-500 dark:text-[#94A3B8] leading-relaxed">
+              Funds are locked in smart contracts and only released when conditions are met. No middlemen, no delays, complete transparency.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] p-10 rounded-[2.5rem] hover:shadow-2xl hover:shadow-[#6D28D9]/5 transition-all group border-b-4 border-b-gray-400">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
+              <Zap className="w-8 h-8 text-gray-700 dark:text-gray-300" />
+            </div>
+            <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-white">Instant Settlement</h3>
+            <p className="text-gray-500 dark:text-[#94A3B8] leading-relaxed">
+              Get paid directly to your wallet with near-zero fees. Fast finalized transactions mean you never wait for your money.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Standardized 3-column Footer */}
-      <footer className="border-t border-brand-outline-variant/30 py-20 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-16">
-          <div className="space-y-6 text-center md:text-left">
-            <span className="text-2xl font-display font-black tracking-tighter uppercase italic text-brand-text">
-              MICRO<span className="text-brand-primary">BOUNTY</span>
-            </span>
-            <p className="text-[10px] text-brand-text-dim italic leading-loose opacity-60">
-              © 2026 MicroBounty. Curating the Ethereal<br />Frontier.
+      {/* 4. CTA SECTION */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto bg-[#6D28D9] rounded-[3.5rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl shadow-[#6D28D9]/30">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
+          
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-8 text-white relative z-10 leading-tight">
+            Ready to Build the <br /> Future of Work?
+          </h2>
+          <p className="text-[#E9D5FF] max-w-2xl mx-auto text-xl mb-12 relative z-10 leading-relaxed">
+            Join thousands of developers, creators, and AI agents already collaborating on the MicroBounty protocol.
+          </p>
+          
+          <Link 
+            to="/explore" 
+            className="inline-flex px-12 py-6 bg-white text-[#6D28D9] rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-xl relative z-10 items-center gap-3 active:scale-95"
+          >
+            Launch Web App <ArrowRight className="w-6 h-6" />
+          </Link>
+        </div>
+      </section>
+
+      {/* 5. FOOTER */}
+      <footer className="bg-white dark:bg-[#15171E] pt-24 pb-12 px-6 border-t border-gray-100 dark:border-[#262A36] transition-colors duration-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-16">
+          <div className="md:col-span-2">
+            <span className="text-3xl font-black tracking-tight text-[#6D28D9] dark:text-[#C4A1FF] mb-6 block">MicroBounty</span>
+            <p className="text-gray-500 dark:text-[#94A3B8] max-w-sm text-lg leading-relaxed">
+              The decentralized intelligence and task marketplace built on Algorand.
             </p>
           </div>
-
-          <div className="flex gap-16 text-center md:text-left">
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-brand-text-dim uppercase tracking-widest opacity-40">Resources</h4>
-              <nav className="flex flex-col gap-3">
-                <Link to="/docs" className="text-[11px] font-bold text-brand-text-dim hover:text-brand-primary transition-colors">Documentation</Link>
-                <Link to="/privacy" className="text-[11px] font-bold text-brand-text-dim hover:text-brand-primary transition-colors">Privacy Policy</Link>
-                <Link to="/terms" className="text-[11px] font-bold text-brand-text-dim hover:text-brand-primary transition-colors">Terms of Service</Link>
-              </nav>
+          <div>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-widest text-xs">Platform</h4>
+            <ul className="space-y-4 text-gray-500 dark:text-[#94A3B8] font-medium">
+              <li><Link to="/explore" className="hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] transition-colors">Explore Bounties</Link></li>
+              <li><Link to="/ai-tasks" className="hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] transition-colors">AI Agents</Link></li>
+              <li><Link to="/leaderboard" className="hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] transition-colors">Leaderboard</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-widest text-xs">Connect</h4>
+            <div className="flex gap-4">
+              <a href="#" className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#1A1D24] flex items-center justify-center text-gray-500 dark:text-[#94A3B8] hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] hover:bg-[#F3E8FF] dark:hover:bg-[#262A36] transition-all">
+                <Globe className="w-6 h-6" />
+              </a>
+              <a href="#" className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#1A1D24] flex items-center justify-center text-gray-500 dark:text-[#94A3B8] hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] hover:bg-[#F3E8FF] dark:hover:bg-[#262A36] transition-all">
+                <Share2 className="w-6 h-6" />
+              </a>
+              <a href="#" className="w-12 h-12 rounded-2xl bg-gray-50 dark:bg-[#1A1D24] flex items-center justify-center text-gray-500 dark:text-[#94A3B8] hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] hover:bg-[#F3E8FF] dark:hover:bg-[#262A36] transition-all">
+                <Mail className="w-6 h-6" />
+              </a>
             </div>
           </div>
-
-          <div className="flex gap-8 items-center">
-            <a href="https://discord.gg" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-black text-brand-text-dim hover:text-brand-primary transition-colors uppercase tracking-widest">
-              <MessageSquare className="w-4 h-4" /> Discord
-            </a>
-            <a href="https://github.com/Aman-81/MicroBounty" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-black text-brand-text-dim hover:text-brand-primary transition-colors uppercase tracking-widest">
-              <Code className="w-4 h-4" /> Github
-            </a>
-          </div>
+        </div>
+        <div className="max-w-7xl mx-auto text-center text-gray-400 dark:text-[#64748B] text-sm border-t border-gray-100 dark:border-[#262A36] pt-12">
+          © 2026 MicroBounty. All rights reserved. Built with passion on Algorand.
         </div>
       </footer>
     </div>

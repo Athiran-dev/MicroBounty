@@ -1,117 +1,146 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
-import { Wallet, Menu, X, Rocket, Bell, Search, User, CircleUser, Sun, Moon } from 'lucide-react';
+import { Bell, Menu, X, User, LogOut } from 'lucide-react';
 import ConnectWalletModal from './ConnectWalletModal';
 import { shortenAddress } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../contexts/ThemeContext';
+// import { useTheme } from '../context/ThemeContext';
 
 export default function GlassNavbar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { activeAddress } = useWallet();
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  
+  // const { isDarkMode, toggleTheme } = useTheme();
+  
+  const { activeAddress, wallets } = useWallet();
   const location = useLocation();
-  const { theme, toggleTheme } = useTheme();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleThemeToggle = (e: React.MouseEvent) => {
-    toggleTheme(e.clientX, e.clientY);
-  };
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navLinks = [
     { name: 'Explore', path: '/explore' },
-    { name: 'Bounties', path: '/explore' },
-    { name: 'Initiate', path: '/create' }
+    { name: 'AI Tasks', path: '/ai-tasks' },
+    { name: 'Post Bounty', path: '/create' },
+    { name: 'Leaderboard', path: '/leaderboard' }
   ];
 
-  const profileLink = activeAddress ? { name: 'Profile', path: '/profile' } : null;
+  const handleDisconnect = () => {
+    console.log("Attempting to disconnect all wallets...");
+    if (wallets) {
+      wallets.forEach((wallet) => {
+        if (wallet.isConnected) {
+          console.log(`Disconnecting ${wallet.metadata.name}...`);
+          wallet.disconnect();
+        }
+      });
+    }
+    setIsProfileDropdownOpen(false);
+  };
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-[50] border-b border-brand-outline-variant/10 backdrop-blur-2xl bg-[#030712]/40">
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
+      <nav className="fixed top-0 left-0 right-0 z-[50] bg-white dark:bg-[#15171E] border-b border-gray-200 dark:border-[#262A36] h-16 transition-colors duration-200">
+        <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between gap-8">
           
           {/* Logo & Links Left */}
-          <div className="flex items-center gap-10">
-            <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-xl font-display font-black tracking-tighter uppercase italic text-brand-text">
-                MICRO<span className="text-brand-primary">BOUNTY</span>
+          <div className="flex items-center gap-12 h-full">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-2xl font-black tracking-tight text-[#6D28D9] dark:text-[#C4A1FF]">
+                MicroBounty
               </span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-8">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`text-[13px] font-medium transition-all relative group ${
-                    location.pathname === link.path
-                      ? 'text-brand-primary'
-                      : 'text-brand-text-dim hover:text-white'
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              ))}
-              {profileLink && (
-                <Link
-                  to={profileLink.path}
-                  className={`text-[13px] font-medium transition-all relative group ${
-                    location.pathname === profileLink.path
-                      ? 'text-brand-primary'
-                      : 'text-brand-text-dim hover:text-white'
-                  }`}
-                >
-                  {profileLink.name}
-                </Link>
-              )}
+            <div className="hidden lg:flex items-center gap-8 h-full">
+              {navLinks.map((link) => {
+                const isActive = location.pathname.startsWith(link.path) || (location.pathname === '/' && link.path === '/explore');
+                return (
+                  <Link
+                    key={link.name}
+                    to={link.path}
+                    className={`text-sm font-bold h-full flex items-center border-b-2 transition-all ${
+                      isActive
+                        ? 'text-[#6D28D9] dark:text-[#C4A1FF] border-[#6D28D9] dark:border-[#C4A1FF]'
+                        : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
-          {/* Search & Actions Right */}
-          <div className="flex-1 flex items-center justify-end gap-6">
-            {/* Search Bar */}
-            <div className="hidden md:flex items-center relative flex-1 max-w-[320px] group">
-              <Search className="absolute left-3 w-4 h-4 text-brand-text-dim/60 group-focus-within:text-brand-primary transition-colors" />
-              <input 
-                type="text" 
-                placeholder="Search bounties..." 
-                className="w-full bg-brand-surface-high/40 border border-brand-outline-variant/20 rounded-lg pl-10 pr-4 py-2 text-xs font-light italic outline-none focus:border-brand-primary/50 transition-all text-brand-text"
-              />
-            </div>
+          {/* Right Actions */}
+          <div className="flex items-center gap-4 h-full">
+            {/* Theme Toggle Removed */}
 
-            <div className="flex items-center gap-4">
-              <button onClick={handleThemeToggle} className="text-brand-text-dim hover:text-white transition-colors p-1">
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-              
-              <button className="text-brand-text-dim hover:text-white transition-colors p-1 relative">
-                <Bell className="w-5 h-5" />
-                <div className="absolute top-1 right-1 w-2 h-2 bg-brand-primary rounded-full border-2 border-[#030712]" />
-              </button>
+            <button className="text-gray-600 dark:text-gray-400 hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] hover:bg-gray-50 dark:hover:bg-[#1A1D24] p-2 rounded-full transition-colors hidden sm:block">
+              <Bell className="w-5 h-5" />
+            </button>
 
-              {activeAddress && (
-                <Link to="/profile" className="text-brand-text-dim hover:text-white transition-colors p-1">
-                  <User className="w-5 h-5" />
-                </Link>
-              )}
-              
-              <button className="text-brand-text-dim hover:text-white transition-colors p-1">
-                <Wallet className="w-5 h-5" />
-              </button>
+            {activeAddress ? (
+              <div className="relative" ref={dropdownRef}>
+                <div 
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="flex items-center gap-2 bg-[#F3E8FF] dark:bg-[#262A36] hover:bg-[#E9D5FF] dark:hover:bg-[#334155] cursor-pointer text-[#6D28D9] dark:text-[#C4A1FF] px-4 py-2 rounded-full font-bold text-xs transition-colors"
+                >
+                  <span className="hidden sm:inline">0.00 ALGO</span>
+                  <span className="text-gray-400 dark:text-gray-500 hidden sm:inline">|</span>
+                  <span>{shortenAddress(activeAddress)}</span>
+                </div>
 
+                {/* Profile Dropdown */}
+                <AnimatePresence>
+                  {isProfileDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1A1D24] border border-gray-200 dark:border-[#262A36] rounded-xl shadow-lg py-2 flex flex-col z-50 overflow-hidden"
+                    >
+                      <Link 
+                        to="/profile" 
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#262A36] text-gray-700 dark:text-gray-300 hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] font-medium transition-colors text-sm"
+                      >
+                        <User className="w-4 h-4" /> My Profile
+                      </Link>
+                      <div className="h-[1px] bg-gray-100 dark:bg-[#262A36] my-1" />
+                      <button 
+                        onClick={handleDisconnect}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 font-medium transition-colors text-sm text-left w-full"
+                      >
+                        <LogOut className="w-4 h-4" /> Disconnect
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="bg-brand-primary hover:bg-brand-primary/90 text-white px-5 py-2 rounded-lg font-bold text-[13px] tracking-tight transition-all shadow-lg active:scale-95"
+                className="border border-gray-300 dark:border-[#334155] hover:bg-gray-50 dark:hover:bg-[#1A1D24] text-gray-900 dark:text-white px-5 py-2 rounded-full font-bold text-sm transition-all"
               >
-                {activeAddress ? shortenAddress(activeAddress) : 'Connect Wallet'}
+                Connect Wallet
               </button>
-            </div>
+            )}
 
             {/* Mobile Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden text-brand-text"
+              className="lg:hidden text-gray-900 dark:text-white p-2"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -119,13 +148,14 @@ export default function GlassNavbar() {
         </div>
       </nav>
 
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="lg:hidden fixed inset-x-0 top-16 z-40 bg-brand-bg/95 backdrop-blur-3xl border-b border-brand-outline-variant px-6 py-8"
+            className="lg:hidden fixed inset-x-0 top-16 z-40 bg-white dark:bg-[#15171E] border-b border-gray-200 dark:border-[#262A36] px-6 py-8 shadow-xl"
           >
             <div className="flex flex-col gap-6">
               {navLinks.map((link) => (
@@ -133,23 +163,11 @@ export default function GlassNavbar() {
                   key={link.name}
                   to={link.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-bold text-brand-text hover:text-brand-primary"
+                  className="text-lg font-bold text-gray-900 dark:text-white hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] transition-colors"
                 >
                   {link.name}
                 </Link>
               ))}
-              {profileLink && (
-                <Link
-                  to={profileLink.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg font-bold text-brand-text hover:text-brand-primary"
-                >
-                  {profileLink.name}
-                </Link>
-              )}
-              <div className="pt-4 border-t border-brand-outline-variant/20 flex items-center gap-4">
-                 <button onClick={handleThemeToggle} className="text-brand-text-dim">Toggle Theme</button>
-              </div>
             </div>
           </motion.div>
         )}

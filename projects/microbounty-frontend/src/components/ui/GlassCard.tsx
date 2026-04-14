@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, HTMLMotionProps } from 'framer-motion';
 
 interface GlassCardProps extends HTMLMotionProps<'div'> {
-  variant?: 'base' | 'premium' | 'liquid';
+  variant?: 'base' | 'premium' | 'liquid' | 'card' | 'mirror';
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({ 
@@ -11,7 +11,14 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   className = '', 
   ...props 
 }) => {
-  const styles = variant === 'premium' ? 'glass-premium' : variant === 'liquid' ? 'glass-liquid' : 'glass';
+  const variantStyles = {
+    base: 'glass',
+    premium: 'glass-premium',
+    liquid: 'glass-liquid',
+    card: 'glass-card',
+    mirror: 'mirror'
+  };
+  const styles = variantStyles[variant] || 'glass';
   
   return (
     <motion.div

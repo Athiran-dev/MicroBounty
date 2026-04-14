@@ -95,13 +95,13 @@ export default function SubmitWorkPage() {
   };
 
   if (initCheck) return (
-    <div className="min-h-screen flex items-center justify-center bg-mesh-stitch">
-      <div className="text-brand-primary animate-pulse font-display text-2xl">Authenticating Contributor...</div>
+    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] dark:bg-[#12141C] text-gray-900 dark:text-white transition-colors duration-200">
+      <div className="text-[#6D28D9] dark:text-[#C4A1FF] animate-pulse font-display text-2xl">Authenticating Contributor...</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-mesh-stitch pt-24 pb-12 px-4">
+    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#12141C] pt-32 pb-12 px-4 transition-colors duration-200">
       <div className="max-w-3xl mx-auto">
         <GlassCard variant="premium" className="relative">
           {/* Header */}
@@ -111,7 +111,7 @@ export default function SubmitWorkPage() {
             </h1>
             <p className="text-brand-outline text-sm max-w-lg mx-auto leading-relaxed">
               Seal your contribution on the decentralized ledger. Your source code links are 
-              <span className="text-brand-primary font-bold"> cryptographically masked</span> until payment release.
+              <span className="text-[#6D28D9] font-bold"> cryptographically masked</span> until payment release.
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export default function SubmitWorkPage() {
             <div className="space-y-6">
               {/* Deploy Link */}
               <div>
-                <label className="block text-[10px] font-black tracking-widest text-brand-primary uppercase mb-3 flex items-center gap-2">
+                <label className="block text-[10px] font-black tracking-widest text-[#6D28D9] uppercase mb-3 flex items-center gap-2">
                   <LinkIcon className="w-3 h-3" /> LIVE_RELIANCE_URL
                 </label>
                 <div className="relative group">
@@ -159,7 +159,7 @@ export default function SubmitWorkPage() {
                   <label className="block text-[10px] font-black tracking-widest text-brand-outline uppercase flex items-center gap-2">
                     <Hash className="w-3 h-3" /> AUTOMATIC_TX_HASH
                   </label>
-                  <div className="w-full bg-brand-surface-high border border-brand-primary/20 rounded-2xl px-6 py-4 font-mono text-xs text-brand-primary overflow-hidden text-ellipsis whitespace-nowrap">
+                  <div className="w-full bg-brand-surface-high border border-brand-primary/20 rounded-2xl px-6 py-4 font-mono text-xs text-[#6D28D9] overflow-hidden text-ellipsis whitespace-nowrap">
                     {generatedHash ? generatedHash : 'Awaiting Source URL...'}
                   </div>
                 </div>
@@ -171,14 +171,14 @@ export default function SubmitWorkPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-2xl"
+                    className="p-4 bg-[#6D28D9]/5 border border-brand-primary/20 rounded-2xl"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-brand-primary/10 rounded-lg">
-                        <FileCode2 className="w-4 h-4 text-brand-primary" />
+                      <div className="p-2 bg-[#6D28D9]/10 rounded-lg">
+                        <FileCode2 className="w-4 h-4 text-[#6D28D9]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] text-brand-primary font-bold uppercase tracking-wider block mb-1">SHA256_ENGINE_LOCK</span>
+                        <span className="text-[10px] text-[#6D28D9] font-bold uppercase tracking-wider block mb-1">SHA256_ENGINE_LOCK</span>
                         <code className="text-[9px] text-brand-outline block truncate font-mono">
                           {generatedHash}
                         </code>
@@ -205,11 +205,11 @@ export default function SubmitWorkPage() {
                 />
               </div>
 
-              <GlassCard className="bg-brand-primary/5 py-4 border-none flex gap-4 items-start">
-                <Shield className="w-6 h-6 text-brand-primary shrink-0" />
+              <GlassCard className="bg-[#6D28D9]/5 py-4 border-none flex gap-4 items-start">
+                <Shield className="w-6 h-6 text-[#6D28D9] shrink-0" />
                 <p className="text-[11px] text-brand-outline leading-loose">
                   <strong className="text-brand-text">ENCRYPTION PROTOCOL:</strong> Your source credentials will be 
-                  <span className="text-brand-primary"> blurred and locked</span>. Only the Issuer can decrypt these 
+                  <span className="text-[#6D28D9]"> blurred and locked</span>. Only the Issuer can decrypt these 
                   once the smart contract releases the reward to your wallet.
                 </p>
               </GlassCard>
