@@ -70,7 +70,9 @@ export default function MyAgentsDashboard() {
           <p className="text-brand-text-dim text-sm">Manage your deployed AI agents and track their performance.</p>
         </div>
         <Link to="/ai-tasks/register">
-          <PremiumButton icon={Plus}>Deploy New Agent</PremiumButton>
+          <PremiumButton>
+            <span className="flex items-center gap-2"><Plus className="w-4 h-4" /> Deploy New Agent</span>
+          </PremiumButton>
         </Link>
       </div>
 
@@ -143,7 +145,9 @@ export default function MyAgentsDashboard() {
             You haven't deployed any AI agents yet. Register your first agent to start earning ALGO.
           </p>
           <Link to="/ai-tasks/register">
-            <PremiumButton icon={Plus}>Deploy Agent</PremiumButton>
+            <PremiumButton>
+              <span className="flex items-center gap-2"><Plus className="w-4 h-4" /> Deploy Agent</span>
+            </PremiumButton>
           </Link>
         </GlassCard>
       ) : (

@@ -8,6 +8,8 @@ import { getSupabase } from '../../utils/supabaseClient';
 import { callJudgeAI } from '../../lib/openrouter';
 import { useAiContractMocks } from '../../hooks/useAiContractMocks';
 import { simulateDocuMind, simulateAuditor, DocuMindOutput, AuditorOutput } from '../../lib/demo-agent-simulator';
+import { X402Badge, X402FlowPanel } from '../../components/X402Badge';
+import type { X402FlowStep } from '../../lib/x402-agent-client';
 import agent1Img from '../../../newUpdatedUi/agent1.png';
 import agent2Img from '../../../newUpdatedUi/agent2.png';
 
@@ -16,7 +18,7 @@ export default function AiAgentProfile() {
   const navigate = useNavigate();
   const { activeAddress } = useWallet();
   const { enqueueSnackbar } = useSnackbar();
-  const { lockAiPayment, releaseAiPayment, refundAiPayment } = useAiContractMocks();
+  const { lockAiPayment, lockAiPaymentViaX402, releaseAiPayment, refundAiPayment } = useAiContractMocks();
 
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +31,8 @@ export default function AiAgentProfile() {
   const [auditFocus, setAuditFocus] = useState('Full Audit');
   const [taskStatus, setTaskStatus] = useState<'idle' | 'locking' | 'processing' | 'judging' | 'completed'>('idle');
   const [taskResult, setTaskResult] = useState<any>(null);
+  const [x402Step, setX402Step] = useState<X402FlowStep>('idle');
+  const [x402TxId, setX402TxId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     fetchAgent();
@@ -66,8 +70,35 @@ export default function AiAgentProfile() {
 
     try {
       setTaskStatus('locking');
-      const taskId = await lockAiPayment(agent.price_per_task_algo, agent.agent_id);
-      if (!taskId) throw new Error("Payment lock failed");
+      setX402Step('idle');
+      setX402TxId(undefined);
+
+      // ─── x402 Payment Flow ───────────────────────────────────────────────
+      // Define what the agent will do when called (after payment succeeds)
+      const agentResultFn = async (): Promise<unknown> => {
+        if (agent.agent_id === 9001) {
+          return simulateDocuMind(clientInput);
+        } else if (agent.agent_id === 9002) {
+          return simulateAuditor(clientInput, selectedLanguage);
+        } else {
+          await new Promise(res => setTimeout(res, 2000));
+          return 'Here is the result of your task based on the simulated agent logic.';
+        }
+      };
+
+      // Run the x402 HTTP 402 → pay → retry flow
+      const x402Result = await lockAiPaymentViaX402(
+        agent.price_per_task_algo,
+        agent.agent_id,
+        agentResultFn,
+        (step) => setX402Step(step)
+      );
+
+      if (!x402Result) throw new Error('x402 payment flow failed');
+
+      const { taskId, result: agentResponse, txId } = x402Result;
+      if (txId) setX402TxId(txId);
+      // ─────────────────────────────────────────────────────────────────────
 
       const supabase = getSupabase();
       const { error: taskError } = await supabase
@@ -87,16 +118,7 @@ export default function AiAgentProfile() {
       if (taskError) throw taskError;
 
       setTaskStatus('processing');
-      let agentResponse: any;
-      
-      if (agent.agent_id === 9001) {
-        agentResponse = await simulateDocuMind(clientInput);
-      } else if (agent.agent_id === 9002) {
-        agentResponse = await simulateAuditor(clientInput, 'AlgoPy'); 
-      } else {
-        await new Promise(res => setTimeout(res, 3000));
-        agentResponse = "Here is the result of your task based on the simulated agent logic.";
-      }
+      // agentResponse already obtained via x402 flow above
 
       setTaskStatus('judging');
       let judgePrompt: string | undefined;
@@ -206,7 +228,10 @@ export default function AiAgentProfile() {
             
             {/* Header Info */}
             <div>
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-4">{agent.name}</h1>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <h1 className="text-4xl md:text-5xl font-black tracking-tight">{agent.name}</h1>
+                <X402Badge flowStep={x402Step} className="mt-2 shrink-0" />
+              </div>
               <p className="text-[#94A3B8] text-lg leading-relaxed mb-6">
                 {agent.description}
               </p>
@@ -426,18 +451,24 @@ export default function AiAgentProfile() {
                   </button>
                 </>
               ) : taskStatus !== 'completed' ? (
-                <div className="py-12 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 border-4 border-[#C4A1FF]/30 border-t-[#C4A1FF] rounded-full animate-spin mb-6" />
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    {taskStatus === 'locking' && 'Locking Payment on Algorand...'}
+                <div className="py-6 flex flex-col items-center justify-center text-center">
+                  <div className="w-14 h-14 border-4 border-[#C4A1FF]/30 border-t-[#C4A1FF] rounded-full animate-spin mb-4" />
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                    {taskStatus === 'locking' && 'Processing x402 Payment...'}
                     {taskStatus === 'processing' && 'Agent is processing your task...'}
                     {taskStatus === 'judging' && 'Judge AI is verifying the output...'}
                   </h3>
-                  <p className="text-[#94A3B8] text-sm max-w-sm">
-                    {taskStatus === 'locking' && 'Please approve the transaction in your Pera Wallet.'}
+                  <p className="text-[#94A3B8] text-sm max-w-sm mb-3">
+                    {taskStatus === 'locking' && 'Approve the Algorand transaction in Lute or Pera Wallet.'}
                     {taskStatus === 'processing' && 'The agent is executing securely off-chain.'}
-                    {taskStatus === 'judging' && 'Gemini Flash is evaluating the output against your requirements to determine payment release.'}
+                    {taskStatus === 'judging' && 'Gemini Flash is evaluating the output to determine payment release.'}
                   </p>
+                  {/* x402 flow panel — shown during the locking / payment phase */}
+                  {taskStatus === 'locking' && (
+                    <div className="w-full max-w-sm text-left">
+                      <X402FlowPanel step={x402Step} txId={x402TxId} />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="animate-in zoom-in-95 duration-300">

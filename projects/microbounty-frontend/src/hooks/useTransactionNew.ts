@@ -56,11 +56,7 @@ export function useTransaction() {
 
       // Send the Atomic Transaction Group
       const result = await appClient.send.createBounty({
-        // 🔥 THE FIX: AlgoKit needs both 'addr' and 'signer' together here
-        sender: {
-          addr: activeAddress,
-          signer: transactionSigner
-        },
+        sender: activeAddress,
         args: {
           paymentTxn: paymentWithSigner,
           payment_txn: paymentWithSigner, // Fallback for generated client
