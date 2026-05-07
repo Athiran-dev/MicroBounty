@@ -89,6 +89,34 @@ export function createX402Signer(
       // Sign via the wallet (Lute or Pera — txnlab handles it)
       const signedTxns = await transactionSigner(decodedTxns, indices);
 
+      // --- ACTUALLY SUBMIT TO NETWORK ---
+      // The mock server doesn't have an Algorand node connection to submit it for us.
+      // To ensure the payment actually happens on-chain for the hackathon demo, we submit it here.
+      try {
+        console.log('[x402] 🌐 Submitting signed x402 payment to Algorand Testnet...');
+        
+        // Concatenate Uint8Array array into a single Uint8Array for sendRawTransaction
+        const totalLength = signedTxns.reduce((sum, txn) => sum + txn.length, 0);
+        const concatenatedTxns = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const txn of signedTxns) {
+          concatenatedTxns.set(txn, offset);
+          offset += txn.length;
+        }
+
+        const algokit = await import('@algorandfoundation/algokit-utils');
+        const algoClient = algokit.AlgorandClient.testNet();
+        const { txid } = await algoClient.client.algod.sendRawTransaction(concatenatedTxns).do() as any;
+        console.log(`[x402] 🔗 Payment submitted! TxID: ${txid}`);
+        
+        // Wait for confirmation
+        await algosdk.waitForConfirmation(algoClient.client.algod, txid, 4);
+        console.log(`[x402] ✅ Payment confirmed on-chain!`);
+      } catch (e) {
+        console.error('[x402] ⚠️ Failed to submit transaction to network:', e);
+        throw new Error(`Failed to submit payment to Algorand: ${e}`);
+      }
+
       // Map back: signed indices get their Uint8Array, others get null
       const result: (Uint8Array | null)[] = txns.map((_, i) => {
         const signedIdx = indices.indexOf(i);

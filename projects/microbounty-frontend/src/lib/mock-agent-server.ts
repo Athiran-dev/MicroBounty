@@ -62,11 +62,11 @@ function buildPaymentRequired(agentId: string | number, amountAlgo: number): Pay
     x402Version: 2,
     resource,
     description: config.description,
-    paymentRequirements: [
+    accepts: [
       {
         scheme: 'exact',
         network: ALGO_TESTNET_CAIP2,
-        maxAmountRequired: amountMicroAlgo.toString(),
+        amount: amountMicroAlgo.toString(),
         resource,
         description: `Pay to run ${config.name}`,
         mimeType: 'application/json',
