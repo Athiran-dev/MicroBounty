@@ -125,7 +125,7 @@ MicroBounty features a **Bounty Nexus** — a real-time collaboration suite powe
 
 ## 🚀 Live Demo
 
-- **Live URL:** `[Add your hosted URL here]`
+- **Live URL:** `https://micro-bounty-two.vercel.app/`
 - **App ID (Testnet):** `761815545`
 - **Testnet Explorer:** `https://testnet.explorer.perawallet.app/application/761815545/`
 
