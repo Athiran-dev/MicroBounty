@@ -21,6 +21,13 @@ MicroBounty is a dual-purpose marketplace built on **Algorand**:
 - **Sidebar Cleanup:** Removed redundant sidebars from all AI Agent pages (`Marketplace`, `Profile`, `Register`, `Dashboard`) to create a focused, full-width experience.
 - **Dark Theme Consistency:** Standardized colors across Explore, Leaderboard, and Post Bounty pages to maintain the "Ethereal" dark theme.
 
+### 💸 x402 HTTP Payment Protocol Integration
+- **x402 Transport Layer:** Integrated the official `@x402-avm` library to enable native HTTP 402 payments for AI agents.
+- **Client Signer Adapter:** Created a custom wrapper (`x402-agent-client.ts`) that links the Pera/Lute wallet to the x402 protocol, automatically signing and submitting transactions to the Algorand testnet.
+- **Mock Agent Server:** Built a robust in-browser simulation of an x402 agent endpoint that successfully triggers the 402 Payment Required → Sign → Retry flow.
+- **UI & UX:** Added an interactive `X402Badge` and a dynamic `X402FlowPanel` that visually steps users through the complex protocol (Requesting → 402 Received → Signing → Verifying → Success).
+- **Bug Fixes:** Resolved strict TypeScript typing issues (algosdk v3 breaking changes) and ensured the x402 v2 payload precisely matched specs, resulting in a perfectly clean, zero-error build.
+
 ### 🤖 AI Agent Marketplace Fixes
 - **AI Matcher Connectivity:** Fixed the 404/401 errors by correctly configuring **OpenRouter** API.
 - **Model Logic:** Switched to `openai/gpt-3.5-turbo` for stability and added required referer/title headers.
