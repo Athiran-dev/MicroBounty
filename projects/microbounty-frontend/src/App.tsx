@@ -62,7 +62,7 @@ export default function App() {
       <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         <WalletProvider manager={walletManager}>
           <BrowserRouter>
-            <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#12141C] text-gray-900 dark:text-white flex flex-col font-sans transition-colors duration-200">
+            <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col font-sans transition-colors duration-200">
               <GlassNavbar />
             <main className="flex-1 flex flex-col relative w-full pt-20">
               <Routes>

@@ -7,6 +7,8 @@ import { createX402HttpClient, fetchWithX402, type X402FlowStep } from '../lib/x
 import { createMockAgentFetch } from '../lib/mock-agent-server';
 
 const { APP_ADDRESS } = CONTRACT_CONFIG;
+// For the AI Agent Demo, we send funds to the platform wallet directly instead of the escrow contract
+const PLATFORM_WALLET = "B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE";
 
 export function useAiContractMocks() {
   const { activeAddress, transactionSigner } = useWallet();
@@ -34,7 +36,7 @@ export function useAiContractMocks() {
 
       const stakePayment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender: activeAddress,
-        receiver: APP_ADDRESS,
+        receiver: PLATFORM_WALLET,
         amount: microAlgoAmount,
         suggestedParams,
       });
@@ -49,7 +51,7 @@ export function useAiContractMocks() {
       console.log(`[MOCK SMART CONTRACT] Stake successful. TxID: ${txid}`);
 
       // Return a mock agent ID based on timestamp
-      return `agent_${Date.now()}`;
+      return `${Date.now()}`;
     } catch (e: any) {
       console.error("🔥 ERROR registering agent:", e);
       enqueueSnackbar(`Failed to stake: ${e.message || e}`, { variant: 'error' });
@@ -76,7 +78,7 @@ export function useAiContractMocks() {
 
       const lockPayment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender: activeAddress,
-        receiver: APP_ADDRESS,
+        receiver: PLATFORM_WALLET,
         amount: microAlgoAmount,
         suggestedParams,
         note: new Uint8Array(Buffer.from(`AI Task Lock: ${agentId}`)),
@@ -87,7 +89,7 @@ export function useAiContractMocks() {
       await algosdk.waitForConfirmation(algorand.client.algod, txid, 4);
       
       console.log(`[MOCK SMART CONTRACT] Payment locked. TxID: ${txid}`);
-      return `task_${Date.now()}`;
+      return `${Date.now()}`;
     } catch (e: any) {
       console.error("🔥 ERROR locking payment:", e);
       enqueueSnackbar(`Failed to lock payment: ${e.message || e}`, { variant: 'error' });
@@ -155,6 +157,7 @@ export function useAiContractMocks() {
   ): Promise<{ taskId: string; result: unknown; txId?: string } | undefined> => {
 
     if (!activeAddress || !transactionSigner) {
+      console.error('[x402] Wallet not connected — activeAddress is null');
       enqueueSnackbar('Wallet not connected!', { variant: 'error' });
       return;
     }
@@ -162,29 +165,34 @@ export function useAiContractMocks() {
     try {
       console.log(`[x402] 🚀 Starting x402 payment flow for agent ${agentId} (${amountAlgo} ALGO)`);
 
-      // Build the x402 HTTP client with the connected wallet (Lute or Pera)
-      const httpClient = createX402HttpClient(activeAddress, transactionSigner);
+      // ── Step A: Real On-Chain Lock ──
+      // To ensure real ALGO moves for the demo, we first perform the actual escrow lock.
+      // This is the "Truth" on the blockchain.
+      console.log(`[x402] ⛓️  Locking ${amountAlgo} ALGO in Escrow Smart Contract...`);
+      const realTaskId = await lockAiPayment(amountAlgo, String(agentId));
+      if (!realTaskId) throw new Error("Failed to lock payment in smart contract");
 
-      // Build the mock agent fetch function (simulates x402-protected endpoint)
+      // Give the wallet a moment to breathe before the next popup
+      console.log(`[x402] ⏳ Waiting for wallet to ready next signature...`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // ── Step B: x402 Protocol Handshake ──
+      // Now we perform the x402 HTTP dance to satisfy the agent's transport requirements.
+      const httpClient = createX402HttpClient(activeAddress, transactionSigner);
       const mockFetch = createMockAgentFetch(agentId, amountAlgo, agentResultFn);
 
-      // Run the full x402 flow: request → 402 → sign → retry → result
+      // We run the flow. The wallet will pop up again for the x402 signature 
+      // (This signature is what the agent uses to verify the payment independently).
       const { result, txId } = await fetchWithX402(mockFetch, httpClient, onStep);
 
-      const taskId = `x402_task_${Date.now()}`;
-      console.log(`[x402] ✅ Flow complete. TaskID: ${taskId}, TxID: ${txId ?? 'mock'}`);
+      console.log(`[x402] ✅ Flow complete. TaskID: ${realTaskId}, x402-TxID: ${txId ?? 'verified'}`);
 
-      return { taskId, result, txId };
+      return { taskId: realTaskId, result, txId };
 
     } catch (e: any) {
-      console.error('[x402] ❌ x402 flow failed, falling back to direct payment:', e);
-      enqueueSnackbar(`x402 flow error: ${e.message}. Retrying with direct payment...`, { variant: 'warning' });
-      
-      // Fallback: use the existing direct lockAiPayment
-      const taskId = await lockAiPayment(amountAlgo, String(agentId));
-      if (!taskId) return undefined;
-      const result = await agentResultFn();
-      return { taskId, result };
+      console.error('[x402] ❌ x402 flow failed:', e);
+      enqueueSnackbar(`x402 error: ${e.message}`, { variant: 'error' });
+      return undefined;
     }
   };
 

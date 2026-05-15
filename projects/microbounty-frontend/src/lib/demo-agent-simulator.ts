@@ -53,8 +53,17 @@ export async function simulateDocuMind(input: string): Promise<DocuMindOutput> {
   Text: ${input}
   Return ONLY valid JSON, no markdown.`;
 
-  const response = await callOpenRouter('google/gemini-flash-1.5', prompt);
-  return JSON.parse(response);
+  const response = await callOpenRouter('google/gemini-2.0-flash-001', prompt);
+  
+  // Clean markdown blocks if present
+  let cleanResponse = response.trim();
+  if (cleanResponse.startsWith('```json')) {
+    cleanResponse = cleanResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  } else if (cleanResponse.startsWith('```')) {
+    cleanResponse = cleanResponse.replace(/^```\n?/, '').replace(/\n?```$/, '').trim();
+  }
+  
+  return JSON.parse(cleanResponse);
 }
 
 export async function simulateAuditor(code: string, language: string): Promise<AuditorOutput> {
@@ -86,6 +95,15 @@ export async function simulateAuditor(code: string, language: string): Promise<A
   Code: ${code}
   Return ONLY valid JSON, no markdown.`;
 
-  const response = await callOpenRouter('anthropic/claude-3.5-sonnet', prompt);
-  return JSON.parse(response);
+  const response = await callOpenRouter('openai/gpt-4o-mini', prompt);
+  
+  // Clean markdown blocks if present
+  let cleanResponse = response.trim();
+  if (cleanResponse.startsWith('```json')) {
+    cleanResponse = cleanResponse.replace(/^```json\n?/, '').replace(/\n?```$/, '').trim();
+  } else if (cleanResponse.startsWith('```')) {
+    cleanResponse = cleanResponse.replace(/^```\n?/, '').replace(/\n?```$/, '').trim();
+  }
+  
+  return JSON.parse(cleanResponse);
 }

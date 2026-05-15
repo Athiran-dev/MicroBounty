@@ -95,13 +95,13 @@ export default function SubmitWorkPage() {
   };
 
   if (initCheck) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] dark:bg-[#12141C] text-gray-900 dark:text-white transition-colors duration-200">
-      <div className="text-[#6D28D9] dark:text-[#C4A1FF] animate-pulse font-display text-2xl">Authenticating Contributor...</div>
+    <div className="min-h-screen flex items-center justify-center bg-brand-bg text-brand-text transition-colors duration-200">
+      <div className="text-brand-primary animate-pulse font-display text-2xl">Authenticating Contributor...</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#12141C] pt-32 pb-12 px-4 transition-colors duration-200">
+    <div className="min-h-screen bg-brand-bg pt-32 pb-12 px-4 transition-colors duration-200">
       <div className="max-w-3xl mx-auto">
         <GlassCard variant="premium" className="relative">
           {/* Header */}
@@ -109,9 +109,9 @@ export default function SubmitWorkPage() {
             <h1 className="text-4xl font-display font-black mb-3 text-glow italic">
               SUBMIT_PROOF_OF_WORK
             </h1>
-            <p className="text-brand-outline text-sm max-w-lg mx-auto leading-relaxed">
+            <p className="text-brand-text-dim text-sm max-w-lg mx-auto leading-relaxed">
               Seal your contribution on the decentralized ledger. Your source code links are 
-              <span className="text-[#6D28D9] font-bold"> cryptographically masked</span> until payment release.
+              <span className="text-brand-primary font-bold"> cryptographically masked</span> until payment release.
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export default function SubmitWorkPage() {
             <div className="space-y-6">
               {/* Deploy Link */}
               <div>
-                <label className="block text-[10px] font-black tracking-widest text-[#6D28D9] uppercase mb-3 flex items-center gap-2">
+                <label className="block text-[10px] font-black tracking-widest text-brand-primary uppercase mb-3 flex items-center gap-2">
                   <LinkIcon className="w-3 h-3" /> LIVE_RELIANCE_URL
                 </label>
                 <div className="relative group">
@@ -129,20 +129,20 @@ export default function SubmitWorkPage() {
                     type="url"
                     value={formData.deployLink}
                     onChange={e => setFormData(p => ({ ...p, deployLink: e.target.value }))}
-                    className="w-full bg-brand-surface-low border border-brand-outline-variant rounded-2xl px-6 py-4 focus:border-brand-primary outline-none transition-all duration-300 group-hover:bg-brand-surface-container text-brand-text placeholder:text-brand-outline/30"
+                    className="w-full bg-brand-surface-low border border-brand-outline-variant rounded-2xl px-6 py-4 focus:border-brand-primary outline-none transition-all duration-300 group-hover:bg-brand-surface-container text-brand-text placeholder:text-brand-text-dim/40"
                     placeholder="https://your-app.vercel.app"
                   />
                 </div>
-                <p className="text-[10px] text-brand-outline mt-2 flex items-center gap-2 opacity-60">
-                  <Info className="w-3 h-3" /> Publicly accessible for immediate verification.
+                <p className="text-[10px] text-brand-text-dim mt-2 flex items-center gap-2 opacity-80">
+                  <Info className="w-3 h-3 text-brand-primary" /> Publicly accessible for immediate verification.
                 </p>
               </div>
 
               {/* GitHub Link & Hash Engine */}
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-black tracking-widest text-brand-outline uppercase flex items-center gap-2">
-                    <LinkIcon className="w-3 h-3" /> SOURCE_CRED_LINK
+                  <label className="block text-[10px] font-black tracking-widest text-brand-text-dim uppercase flex items-center gap-2">
+                    <LinkIcon className="w-3 h-3 text-brand-primary" /> SOURCE_CRED_LINK
                   </label>
                   <input
                     required
@@ -156,10 +156,10 @@ export default function SubmitWorkPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-black tracking-widest text-brand-outline uppercase flex items-center gap-2">
-                    <Hash className="w-3 h-3" /> AUTOMATIC_TX_HASH
+                  <label className="block text-[10px] font-black tracking-widest text-brand-text-dim uppercase flex items-center gap-2">
+                    <Hash className="w-3 h-3 text-brand-primary" /> AUTOMATIC_TX_HASH
                   </label>
-                  <div className="w-full bg-brand-surface-high border border-brand-primary/20 rounded-2xl px-6 py-4 font-mono text-xs text-[#6D28D9] overflow-hidden text-ellipsis whitespace-nowrap">
+                  <div className="w-full bg-brand-surface-high border border-brand-primary/20 rounded-2xl px-6 py-4 font-mono text-xs text-brand-primary overflow-hidden text-ellipsis whitespace-nowrap">
                     {generatedHash ? generatedHash : 'Awaiting Source URL...'}
                   </div>
                 </div>
@@ -171,15 +171,15 @@ export default function SubmitWorkPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="p-4 bg-[#6D28D9]/5 border border-brand-primary/20 rounded-2xl"
+                    className="p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-2xl"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-[#6D28D9]/10 rounded-lg">
-                        <FileCode2 className="w-4 h-4 text-[#6D28D9]" />
+                      <div className="p-2 bg-brand-primary/10 rounded-lg">
+                        <FileCode2 className="w-4 h-4 text-brand-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] text-[#6D28D9] font-bold uppercase tracking-wider block mb-1">SHA256_ENGINE_LOCK</span>
-                        <code className="text-[9px] text-brand-outline block truncate font-mono">
+                        <span className="text-[10px] text-brand-primary font-bold uppercase tracking-wider block mb-1">SHA256_ENGINE_LOCK</span>
+                        <code className="text-[9px] text-brand-text-dim block truncate font-mono">
                           {generatedHash}
                         </code>
                       </div>
@@ -191,8 +191,8 @@ export default function SubmitWorkPage() {
 
             <div className="space-y-6 pt-6 border-t border-brand-outline-variant">
               <div>
-                <label className="block text-[10px] font-black tracking-widest text-brand-outline uppercase mb-3 text-center">
-                  <AlignLeft className="w-3 h-3 inline mr-1" /> ARCHITECTURE_SUMMARY
+                <label className="block text-[10px] font-black tracking-widest text-brand-text-dim uppercase mb-3 text-center">
+                  <AlignLeft className="w-3 h-3 inline mr-1 text-brand-primary" /> ARCHITECTURE_SUMMARY
                 </label>
                 <textarea
                   required
@@ -200,16 +200,16 @@ export default function SubmitWorkPage() {
                   value={formData.description}
                   onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
                   rows={4}
-                  className="w-full bg-brand-surface-low border border-brand-outline-variant rounded-2xl px-6 py-4 focus:border-brand-primary outline-none transition-all duration-300 group-hover:bg-brand-surface-container text-brand-text placeholder:text-brand-outline/30 resize-none"
+                  className="w-full bg-brand-surface-low border border-brand-outline-variant rounded-2xl px-6 py-4 focus:border-brand-primary outline-none transition-all duration-300 group-hover:bg-brand-surface-container text-brand-text placeholder:text-brand-text-dim/40 resize-none"
                   placeholder="Describe your solution..."
                 />
               </div>
 
-              <GlassCard className="bg-[#6D28D9]/5 py-4 border-none flex gap-4 items-start">
-                <Shield className="w-6 h-6 text-[#6D28D9] shrink-0" />
-                <p className="text-[11px] text-brand-outline leading-loose">
+              <GlassCard className="bg-brand-primary/5 py-4 border-none flex gap-4 items-start">
+                <Shield className="w-6 h-6 text-brand-primary" shrink-0 />
+                <p className="text-[11px] text-brand-text-dim leading-loose">
                   <strong className="text-brand-text">ENCRYPTION PROTOCOL:</strong> Your source credentials will be 
-                  <span className="text-[#6D28D9]"> blurred and locked</span>. Only the Issuer can decrypt these 
+                  <span className="text-brand-primary"> blurred and locked</span>. Only the Issuer can decrypt these 
                   once the smart contract releases the reward to your wallet.
                 </p>
               </GlassCard>

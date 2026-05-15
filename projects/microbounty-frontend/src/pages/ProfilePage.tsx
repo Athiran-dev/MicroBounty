@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getSupabase } from '../utils/supabaseClient';
 import { Bounty, Application } from '../utils/supabase-types';
 import { shortenAddress } from '../lib/utils';
 import BountyCard from '../components/BountyCard';
 import { motion } from 'framer-motion';
-import { Award, Briefcase, FileCode2 } from 'lucide-react';
+import { Award, Briefcase, FileCode2, Bot } from 'lucide-react';
 
 import { useWallet } from '@txnlab/use-wallet-react';
 
@@ -118,13 +118,20 @@ export default function ProfilePage() {
                 <p className="font-black text-lg text-gray-900 dark:text-white">{appliedBounties.length}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2 rounded-xl">
+            <div className="flex items-center gap-2 bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] px-4 py-2 rounded-xl">
               <Award className="w-5 h-5 text-emerald-500" />
               <div>
                 <p className="text-[10px] text-emerald-500 uppercase tracking-widest font-bold">Earned</p>
                 <p className="font-black text-lg text-emerald-500">{algoEarnedApprox.toFixed(2)} ALGO</p>
               </div>
             </div>
+            <Link to="/ai-tasks/my-agents" className="flex items-center gap-2 bg-white dark:bg-[#15171E] border border-[#6D28D9]/30 px-4 py-2 rounded-xl hover:bg-[#F3E8FF] transition-colors">
+              <Bot className="w-5 h-5 text-[#6D28D9]" />
+              <div>
+                <p className="text-[10px] text-[#6D28D9] uppercase tracking-widest font-bold">AI Agents</p>
+                <p className="font-black text-lg text-gray-900 dark:text-white">Manage</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

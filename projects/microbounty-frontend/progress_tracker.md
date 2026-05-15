@@ -26,11 +26,13 @@ MicroBounty is a dual-purpose marketplace built on **Algorand**:
 - **Client Signer Adapter:** Created a custom wrapper (`x402-agent-client.ts`) that links the Pera/Lute wallet to the x402 protocol, automatically signing and submitting transactions to the Algorand testnet.
 - **Mock Agent Server:** Built a robust in-browser simulation of an x402 agent endpoint that successfully triggers the 402 Payment Required → Sign → Retry flow.
 - **UI & UX:** Added an interactive `X402Badge` and a dynamic `X402FlowPanel` that visually steps users through the complex protocol (Requesting → 402 Received → Signing → Verifying → Success).
-- **Bug Fixes:** Resolved strict TypeScript typing issues (algosdk v3 breaking changes) and ensured the x402 v2 payload precisely matched specs, resulting in a perfectly clean, zero-error build.
+- **Bug Fixes:** 
+  - Fixed strict TypeScript typing issues (algosdk v3 breaking changes).
+  - Fixed x402 header bugs where the mock server sent `X-PAYMENT-REQUIRED` instead of `PAYMENT-REQUIRED` as required by the v2 spec.
+  - Fixed "Asset ID cannot be zero" error by removing client-side network submission (x402 relies on the server to submit).
 
 ### 🤖 AI Agent Marketplace Fixes
-- **AI Matcher Connectivity:** Fixed the 404/401 errors by correctly configuring **OpenRouter** API.
-- **Model Logic:** Switched to `openai/gpt-3.5-turbo` for stability and added required referer/title headers.
+- **AI Matcher & Agent Connectivity:** Fixed the 404 errors by correcting deprecated OpenRouter models. Upgraded to `google/gemini-2.0-flash-001` and `openai/gpt-4o-mini`.
 - **Agent Profiles:** Fixed a critical syntax error in `AiAgentProfile.tsx` where layout tags were mismatched.
 
 ### 💳 Wallet & Smart Contract

@@ -109,7 +109,7 @@ export async function callJudgeAI(
   agent: any, 
   clientInput: string, 
   agentOutput: string, 
-  model: string = "google/gemini-flash-1.5",
+  model: string = "google/gemini-2.0-flash-001",
   customPrompt?: string
 ) {
   const defaultPrompt = `You are a strict quality judge for AI agent outputs.

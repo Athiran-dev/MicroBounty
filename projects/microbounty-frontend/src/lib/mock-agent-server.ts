@@ -27,12 +27,12 @@ const AGENT_CONFIGS: Record<string | number, {
   9001: {
     name: 'DocuMind Research AI',
     description: 'Analyzes research papers and extracts key findings',
-    priceAlgo: 0.5,
+    priceAlgo: 1.0,
   },
   9002: {
     name: 'Smart Contract Auditor',
     description: 'Audits smart contracts for security vulnerabilities',
-    priceAlgo: 1.0,
+    priceAlgo: 2.0,
   },
 };
 
@@ -45,7 +45,7 @@ const DEFAULT_AGENT = {
 // Algorand Testnet escrow address (App Address from CONTRACT_CONFIG)
 const PAYMENT_RECEIVER = import.meta.env.VITE_X402_AGENT_RECEIVER
   || import.meta.env.VITE_APP_ADDRESS
-  || 'ISOM7J3NG65QEK4ZMH3ZREXDQBH4NMALY6M22HL7BXDMDSEBJNWO7DAHWY';
+  || 'B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE';
 
 // ─── PaymentRequired Builder ──────────────────────────────────────────────────
 
@@ -128,9 +128,8 @@ export function createMockAgentFetch(
           statusText: 'Payment Required',
           headers: {
             'Content-Type': 'application/json',
-            'X-PAYMENT-REQUIRED': paymentRequiredBase64,
-            // v1 compat header (some x402 libs check this too)
-            'X-Payment-Required': paymentRequiredBase64,
+            // x402 v2 spec: library reads 'PAYMENT-REQUIRED' (NOT 'X-PAYMENT-REQUIRED')
+            'PAYMENT-REQUIRED': paymentRequiredBase64,
           },
         }
       );
@@ -164,8 +163,8 @@ export function createMockAgentFetch(
         statusText: 'OK',
         headers: {
           'Content-Type': 'application/json',
-          'X-PAYMENT-RESPONSE': settleResponseBase64,
-          'X-Payment-Response': settleResponseBase64,
+          // x402 v2 spec: library reads 'PAYMENT-RESPONSE' (NOT 'X-PAYMENT-RESPONSE')
+          'PAYMENT-RESPONSE': settleResponseBase64,
         },
       }
     );

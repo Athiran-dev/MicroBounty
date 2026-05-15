@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useWallet } from '@txnlab/use-wallet-react';
-import { Brain, Star, Activity, DollarSign, Settings, Plus, Play, Square, ExternalLink } from 'lucide-react';
+import { Brain, Star, Activity, DollarSign, Settings, Plus, Play, Square, ExternalLink, X, Save, Image as ImageIcon, Globe, Coins } from 'lucide-react';
 import { getSupabase } from '../../utils/supabaseClient';
 import { GlassCard } from '../../components/ui/GlassCard';
 import { PremiumButton } from '../../components/ui/PremiumButton';
+import ImageUpload from '../../components/ImageUpload';
 
 export default function MyAgentsDashboard() {
   const { activeAddress } = useWallet();
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingAgent, setEditingAgent] = useState<any | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (activeAddress) fetchAgents();
@@ -47,6 +50,39 @@ export default function MyAgentsDashboard() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleUpdateVisuals = async () => {
+    if (!editingAgent) return;
+    setSaving(true);
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('ai_agents')
+        .update({
+          avatar_url: editingAgent.avatar_url,
+          preview_images: editingAgent.preview_images,
+          endpoint_url: editingAgent.endpoint_url,
+          price_per_task_algo: editingAgent.price_per_task_algo
+        })
+        .eq('agent_id', editingAgent.agent_id);
+
+      if (error) throw error;
+      setAgents(agents.map(a => a.agent_id === editingAgent.agent_id ? editingAgent : a));
+      setEditingAgent(null);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update agent visuals.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updatePreviewImage = (index: number, url: string) => {
+    if (!editingAgent) return;
+    const newPreviews = [...(editingAgent.preview_images || ['', '', ''])];
+    newPreviews[index] = url;
+    setEditingAgent({ ...editingAgent, preview_images: newPreviews });
   };
 
   if (!activeAddress) {
@@ -177,10 +213,15 @@ export default function MyAgentsDashboard() {
                               <ExternalLink className="w-3 h-3" />
                             </Link>
                           </div>
-                          <div className="text-xs text-brand-text-dim flex items-center gap-2 mt-1">
-                            <span className="uppercase">{agent.category}</span>
-                            <span>•</span>
-                            <span className="text-green-400 font-bold">{agent.price_per_task_algo} ALGO</span>
+                          <div className="text-xs text-brand-text-dim flex flex-col gap-1 mt-2">
+                            <div className="flex items-center gap-2">
+                              <span className="uppercase px-1.5 py-0.5 bg-white/5 rounded border border-white/5">{agent.category}</span>
+                              <span className="text-green-400 font-bold">{agent.price_per_task_algo} ALGO</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 opacity-60">
+                              <Globe className="w-3 h-3" />
+                              <span className="truncate max-w-[150px] font-mono">{agent.endpoint_url || 'No endpoint set'}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -216,6 +257,13 @@ export default function MyAgentsDashboard() {
                         >
                           {agent.is_active ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
+                        <button 
+                          onClick={() => setEditingAgent(agent)}
+                          className="p-2 rounded-lg border border-brand-outline-variant/30 text-brand-text-dim hover:bg-brand-surface-high hover:text-gray-900 dark:text-white transition-colors" 
+                          title="Edit Visuals"
+                        >
+                          <ImageIcon className="w-4 h-4" />
+                        </button>
                         <button className="p-2 rounded-lg border border-brand-outline-variant/30 text-brand-text-dim hover:bg-brand-surface-high hover:text-gray-900 dark:text-white transition-colors" title="Settings">
                           <Settings className="w-4 h-4" />
                         </button>
@@ -226,6 +274,106 @@ export default function MyAgentsDashboard() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Edit Visuals Modal */}
+      {editingAgent && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEditingAgent(null)} />
+          <GlassCard className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border-white/10 shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-white/5">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-brand-primary" />
+                Edit Visuals: {editingAgent.name}
+              </h2>
+              <button onClick={() => setEditingAgent(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-8 custom-scrollbar">
+              
+              {/* Core Config Section */}
+              <div className="space-y-6 bg-white/5 p-6 rounded-2xl border border-white/10">
+                <h3 className="text-xs font-black uppercase tracking-widest text-brand-primary/80 mb-4">Core Configuration</h3>
+                
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="block text-gray-300 font-bold text-sm mb-2 flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-brand-primary" /> Endpoint URL (API)
+                    </label>
+                    <input 
+                      type="text" 
+                      value={editingAgent.endpoint_url || ''}
+                      onChange={(e) => setEditingAgent({...editingAgent, endpoint_url: e.target.value})}
+                      placeholder="https://api.youragent.com/run"
+                      className="w-full bg-brand-bg border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all font-mono"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 font-bold text-sm mb-2 flex items-center gap-2">
+                      <Coins className="w-4 h-4 text-brand-primary" /> Pricing (Execution Fee in ALGO)
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="number" 
+                        value={editingAgent.price_per_task_algo || 0}
+                        onChange={(e) => setEditingAgent({...editingAgent, price_per_task_algo: Number(e.target.value)})}
+                        className="w-full bg-brand-bg border border-white/10 rounded-xl px-4 py-4 text-sm text-white focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all pl-12"
+                      />
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-primary font-bold">Ⱥ</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visuals Section */}
+              <div className="space-y-6">
+                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 mb-4">Branding & Media</h3>
+                
+                <ImageUpload 
+                  label="Agent Avatar"
+                  value={editingAgent.avatar_url}
+                  onUpload={(url) => setEditingAgent({...editingAgent, avatar_url: url})}
+                />
+
+                <div className="space-y-4">
+                  <label className="block text-gray-300 font-bold text-sm">Sample Output Images</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[0, 1, 2].map((i) => (
+                      <ImageUpload 
+                        key={i}
+                        value={editingAgent.preview_images?.[i] || ''}
+                        onUpload={(url) => updatePreviewImage(i, url)}
+                        className="aspect-square"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-white/10 flex justify-end gap-3 bg-white/5">
+              <button 
+                onClick={() => setEditingAgent(null)}
+                className="px-6 py-2 rounded-xl border border-white/10 text-gray-400 font-bold hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateVisuals}
+                disabled={saving}
+                className="px-8 py-2 rounded-xl bg-brand-primary text-gray-900 font-bold hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save Changes</>}
+              </button>
+            </div>
+          </GlassCard>
         </div>
       )}
       </div>

@@ -3,7 +3,7 @@ import { getSupabase } from '../utils/supabaseClient';
 const DEMO_AGENTS = [
   {
     agent_id: 9001,
-    developer_wallet: "DEMO_DOCUMIND_WALLET",
+    developer_wallet: "B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE",
     name: "DocuMind AI",
     category: "research-analysis",
     description: "DocuMind AI is an enterprise-grade research intelligence engine built for academics, analysts, and knowledge workers. Powered by Gemini's massive context window, it ingests entire research papers, whitepapers, and technical documents — extracting what actually matters. Stop spending hours reading. Start spending minutes understanding.",
@@ -24,7 +24,7 @@ const DEMO_AGENTS = [
   },
   {
     agent_id: 9002,
-    developer_wallet: "DEMO_AUDITOR_WALLET",
+    developer_wallet: "B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE",
     name: "Smart Contract Vulnerability Auditor",
     category: "code-review",
     description: "The Smart Contract Vulnerability Auditor is a specialized security intelligence agent trained on thousands of real-world smart contract exploits, audit reports, and blockchain vulnerabilities. Whether you are writing AlgoPy for Algorand, PyTeal, or Solidity for EVM chains — this agent acts as your senior Web3 auditor before you deploy. Catch critical vulnerabilities before hackers do. Get structured, actionable security reports instantly.",

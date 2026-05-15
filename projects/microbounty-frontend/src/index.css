@@ -52,16 +52,16 @@
 
   .dark {
     /* DARK MODE OVERRIDES */
-    --theme-bg: #0F1015;
+    --theme-bg: #0B0C10;
     --theme-surface: #15171E;
-    --theme-surface-low: #1A1D24;
-    --theme-surface-container: #15171E;
-    --theme-surface-high: #262A36;
+    --theme-surface-low: #1A1D26;
+    --theme-surface-container: #1C1F2B;
+    --theme-surface-high: #2D3345;
     
     --theme-text: #ffffff;
     --theme-text-dim: #94A3B8;
-    --theme-outline: #262A36;
-    --theme-outline-variant: rgba(255, 255, 255, 0.05);
+    --theme-outline: #33394D;
+    --theme-outline-variant: rgba(255, 255, 255, 0.1);
     --theme-shadow-ambient: 0px 24px 48px rgba(0, 0, 0, 0.4);
 
     --theme-primary: #C4A1FF;
@@ -120,9 +120,12 @@
   }
 
   .dark .glass-premium {
-    background: linear-gradient(135deg, rgba(21, 23, 30, 0.9), rgba(21, 23, 30, 0.7));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, rgba(30, 35, 50, 0.7), rgba(20, 25, 40, 0.5));
+    border: 1px solid rgba(196, 161, 255, 0.2);
+    box-shadow: 
+      0 30px 80px rgba(0, 0, 0, 0.6),
+      inset 0 0 20px rgba(196, 161, 255, 0.05);
+    backdrop-filter: blur(40px) saturate(180%);
   }
 
   .glass-liquid {

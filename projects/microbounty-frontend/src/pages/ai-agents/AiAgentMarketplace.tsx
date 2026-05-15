@@ -113,12 +113,18 @@ Respond ONLY with the numerical ID of the agent. If no agent fits perfectly, pic
       <div className="p-10 max-w-7xl mx-auto font-sans text-gray-900 dark:text-white">
 
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-black tracking-tight mb-8">
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <h1 className="text-4xl font-black tracking-tight">
             Browse Agent <span className="text-[#6D28D9]">Marketplace</span>
           </h1>
-          
-          <div className="mirror rounded-[2rem] p-8 mb-12 relative overflow-hidden group">
+          <Link 
+            to="/ai-tasks/register"
+            className="bg-white dark:bg-[#1A1D24] border border-[#6D28D9] text-[#6D28D9] dark:text-[#C4A1FF] dark:border-[#C4A1FF] px-6 py-3 rounded-xl font-bold hover:bg-[#6D28D9] hover:text-white dark:hover:bg-[#C4A1FF] dark:hover:text-[#12141C] transition-all flex items-center gap-2 w-fit"
+          >
+            <PenTool className="w-4 h-4" /> Deploy Your Agent
+          </Link>
+        </div>
+        <div className="mirror rounded-[2rem] p-8 mb-12 relative overflow-hidden group">
              <div className="absolute top-0 right-0 w-64 h-64 bg-[#C4A1FF]/10 blur-[80px] -mr-32 -mt-32" />
              
              <h2 className="text-xl font-black flex items-center gap-2 mb-3">
@@ -164,7 +170,7 @@ Respond ONLY with the numerical ID of the agent. If no agent fits perfectly, pic
                         </div>
                         <div>
                           <h3 className="font-bold text-gray-900 dark:text-white">{matchedAgent.name}</h3>
-                          <p className="text-xs text-gray-500 dark:text-[#94A3B8]">{matchedAgent.category} • {matchedAgent.price_per_task} ALGO</p>
+                          <p className="text-xs text-gray-500 dark:text-[#94A3B8]">{matchedAgent.category} • {matchedAgent.price_per_task_algo} ALGO</p>
                         </div>
                       </div>
                       <Link 
@@ -186,7 +192,6 @@ Respond ONLY with the numerical ID of the agent. If no agent fits perfectly, pic
               className="w-full bg-white/40 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/10 rounded-xl pl-12 pr-4 py-4 text-sm outline-none focus:border-[#C4A1FF] focus:ring-2 focus:ring-[#C4A1FF]/20 transition-all placeholder:text-gray-400 dark:text-[#64748B] shadow-sm"
             />
           </div>
-        </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {categories.map((cat) => (
@@ -225,8 +230,10 @@ Respond ONLY with the numerical ID of the agent. If no agent fits perfectly, pic
                 
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#F3E8FF] flex items-center justify-center overflow-hidden">
-                       {agent.agent_id === 9001 ? (
+                    <div className="w-12 h-12 rounded-xl bg-[#F3E8FF] flex items-center justify-center overflow-hidden border border-[#6D28D9]/10">
+                       {agent.avatar_url ? (
+                          <img src={agent.avatar_url} alt={agent.name} className="w-full h-full object-cover" />
+                       ) : agent.agent_id === 9001 ? (
                           <img src={agent1Img} alt="Avatar" className="w-full h-full object-cover" />
                        ) : agent.agent_id === 9002 ? (
                           <img src={agent2Img} alt="Avatar" className="w-full h-full object-cover" />
@@ -276,7 +283,7 @@ Respond ONLY with the numerical ID of the agent. If no agent fits perfectly, pic
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-[#334155] mt-auto">
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-0.5">Price per task</p>
-                    <p className="font-black text-xl text-gray-900 dark:text-white">{agent.price_per_task} ALGO</p>
+                    <p className="font-black text-xl text-gray-900 dark:text-white">{agent.price_per_task_algo} ALGO</p>
                   </div>
                   <Link
                     to={`/ai-tasks/${agent.agent_id}`}

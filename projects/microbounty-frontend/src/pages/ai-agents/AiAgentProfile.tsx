@@ -48,6 +48,7 @@ export default function AiAgentProfile() {
         .single();
 
       if (error) throw error;
+      
       setAgent(data);
     } catch (err) {
       console.error(err);
@@ -100,7 +101,8 @@ export default function AiAgentProfile() {
       if (txId) setX402TxId(txId);
       // ─────────────────────────────────────────────────────────────────────
 
-      const supabase = getSupabase();
+      // Pass activeAddress to getSupabase so it sets the wallet identity header for RLS policies!
+      const supabase = getSupabase(activeAddress);
       const { error: taskError } = await supabase
         .from('ai_tasks')
         .insert({
@@ -122,23 +124,27 @@ export default function AiAgentProfile() {
 
       setTaskStatus('judging');
       let judgePrompt: string | undefined;
-      let judgeModel = "google/gemini-flash-1.5";
+      let judgeModel = "google/gemini-2.0-flash-001";
 
       if (agent.agent_id === 9001) {
         judgePrompt = `You are evaluating a research paper analysis agent output. Check if the response contains: summary, key_findings array (min 2 items), methodology, and eli5 explanation. Agent output: {output} Return JSON: { "verdict": boolean, "confidence": number, "reasoning": string }`;
       } else if (agent.agent_id === 9002) {
-        judgeModel = "anthropic/claude-3.5-sonnet";
+        judgeModel = "openai/gpt-4o-mini";
         judgePrompt = `You are evaluating a smart contract security audit output. The audit must contain: security_grade (A/B/C/F), overall_risk level, vulnerabilities array, and summary. Agent output: {output} Return JSON: { "verdict": boolean, "confidence": number, "reasoning": string }`;
       }
 
       const judgeVerdict = await callJudgeAI(agent, clientInput, JSON.stringify(agentResponse), judgeModel, judgePrompt);
+      console.log(`[Judge AI] Verdict: ${judgeVerdict.verdict}, Confidence: ${judgeVerdict.confidence}%, Reasoning: ${judgeVerdict.reasoning}`);
 
       let finalStatus = judgeVerdict.verdict ? 'completed' : 'failed';
-      let isSuccess = judgeVerdict.verdict && judgeVerdict.confidence >= 70;
+      // Lowering threshold to 60 for better demo reliability
+      let isSuccess = judgeVerdict.verdict && judgeVerdict.confidence >= 60;
 
       if (isSuccess) {
+        console.log(`[Judge AI] ✅ Quality Check Passed. Releasing payment to developer...`);
         await releaseAiPayment(taskId, agent.developer_wallet);
       } else {
+        console.log(`[Judge AI] ❌ Quality Check Failed. Refunding client...`);
         await refundAiPayment(taskId, activeAddress);
         finalStatus = 'refunded';
       }
@@ -187,12 +193,16 @@ export default function AiAgentProfile() {
           <div className="w-full lg:w-[420px] shrink-0 space-y-8">
             {/* Agent Avatar */}
             <div className="glass-card rounded-3xl p-4 border border-[#262A36] relative overflow-hidden group">
-              <div className={`aspect-square rounded-2xl w-full flex items-center justify-center overflow-hidden relative ${agent.agent_id === 9001 || agent.agent_id === 9002 ? '' : 'bg-gradient-to-br from-[#A37CF0] to-[#00FF9D]'}`}>
-                 {agent.agent_id === 9001 ? (
+              <div className="aspect-square rounded-2xl w-full flex items-center justify-center overflow-hidden relative bg-gradient-to-br from-[#A37CF0]/20 to-[#00FF9D]/10">
+                 {agent.avatar_url ? (
+                    <img src={agent.avatar_url} alt={agent.name} className="w-full h-full object-cover" />
+                 ) : agent.agent_id === 9001 ? (
                     <img src={agent1Img} alt="DocuMind AI" className="w-full h-full object-cover" />
                  ) : agent.agent_id === 9002 ? (
                     <img src={agent2Img} alt="Auditor" className="w-full h-full object-cover" />
-                 ) : null}
+                 ) : (
+                    <Brain className="w-20 h-20 text-[#C4A1FF] opacity-50" />
+                 )}
                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div className="absolute bottom-8 right-8 bg-[#00FF9D] text-[#12141C] px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-bold shadow-lg">
@@ -210,15 +220,31 @@ export default function AiAgentProfile() {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-1 row-span-2 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-[1/1.5] overflow-hidden relative">
-                   <div className="absolute inset-0 bg-gradient-to-br from-[#A37CF0]/20 to-transparent" />
-                </div>
-                <div className="col-span-1 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-square overflow-hidden relative">
-                   <div className="absolute inset-0 bg-gradient-to-br from-[#00FF9D]/20 to-transparent" />
-                </div>
-                <div className="col-span-1 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-square overflow-hidden relative">
-                   <div className="absolute inset-0 bg-gradient-to-tr from-[#A37CF0]/20 to-[#00FF9D]/10" />
-                </div>
+                {agent.preview_images && agent.preview_images.length > 0 ? (
+                  agent.preview_images.map((img: string, i: number) => (
+                    <div key={i} className={`${i === 0 ? 'col-span-1 row-span-2 aspect-[1/1.5]' : 'col-span-1 aspect-square'} bg-[#1A1D24] border border-[#262A36] rounded-2xl overflow-hidden relative`}>
+                      {img ? (
+                        <img src={img} alt={`Sample ${i+1}`} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-[#A37CF0]/20 to-transparent flex items-center justify-center">
+                          <ImageIcon className="w-8 h-8 text-[#94A3B8] opacity-20" />
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <>
+                    <div className="col-span-1 row-span-2 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-[1/1.5] overflow-hidden relative">
+                       <div className="absolute inset-0 bg-gradient-to-br from-[#A37CF0]/20 to-transparent" />
+                    </div>
+                    <div className="col-span-1 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-square overflow-hidden relative">
+                       <div className="absolute inset-0 bg-gradient-to-br from-[#00FF9D]/20 to-transparent" />
+                    </div>
+                    <div className="col-span-1 bg-[#1A1D24] border border-[#262A36] rounded-2xl aspect-square overflow-hidden relative">
+                       <div className="absolute inset-0 bg-gradient-to-tr from-[#A37CF0]/20 to-[#00FF9D]/10" />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

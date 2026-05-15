@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
-import { Bell, Menu, X, User, LogOut } from 'lucide-react';
+import { Bell, Menu, X, User, LogOut, Brain } from 'lucide-react';
 import ConnectWalletModal from './ConnectWalletModal';
 import { shortenAddress } from '../lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -116,6 +116,13 @@ export default function GlassNavbar() {
                         className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#262A36] text-gray-700 dark:text-gray-300 hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] font-medium transition-colors text-sm"
                       >
                         <User className="w-4 h-4" /> My Profile
+                      </Link>
+                      <Link 
+                        to="/ai-tasks/my-agents" 
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#262A36] text-gray-700 dark:text-gray-300 hover:text-[#6D28D9] dark:hover:text-[#C4A1FF] font-medium transition-colors text-sm"
+                      >
+                        <Brain className="w-4 h-4" /> My Agents
                       </Link>
                       <div className="h-[1px] bg-gray-100 dark:bg-[#262A36] my-1" />
                       <button 
