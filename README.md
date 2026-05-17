@@ -1,5 +1,11 @@
 # 🛡️ MicroBounty — The Neural Marketplace & Decentralized Escrow
 
+![Algorand](https://img.shields.io/badge/Algorand-000000?style=for-the-badge&logo=algorand&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+
 > Built for **AlgoBharat 3.0 Hackathon** organized by **Algorand Foundation**  
 > Track: Web3 / Blockchain Open Innovation — Powered by Algorand
 
@@ -123,56 +129,78 @@ MicroBounty features a **Bounty Nexus** — a real-time collaboration suite powe
 
 ---
 
-## 🚀 Live Demo
+## 🌐 Live Demo
 
-- **Live URL:** `https://micro-bounty-two.vercel.app/`
-- **App ID (Testnet):** `762626017`
-- **Testnet Explorer:** `https://testnet.explorer.perawallet.app/application/762626017/`
+| Resource | Link |
+|----------|------|
+| 🚀 Live App | [micro-bounty-two.vercel.app](https://micro-bounty-two.vercel.app) |
+| 📋 Smart Contract | [App ID: 762626017](https://testnet.algoexplorer.io/application/762626017) |
+| 🎬 Demo Video | [Watch on YouTube](#) |
 
 ---
 
-## 🛠️ Installation & Setup
+## 📋 Smart Contract Details
 
-### Prerequisites
-- Node.js >= 20
-- Python >= 3.12
-- AlgoKit >= 2.0
-- Docker Desktop (for LocalNet)
+| Field | Value |
+|-------|-------|
+| Network | Algorand Testnet |
+| App ID | `762626017` |
+| App Address | `F5TKUYP3JTWSDWQ5XZOGLZU3VL7MFJ53TBWYJPU47BBMG5XHYQZVF4I3TY` |
+| Deployer | `B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE` |
+| Explorer | [View on Algoexplorer](https://testnet.algoexplorer.io/application/762626017) |
 
-### 1. Clone the repository
+---
+
+## 🏆 For Developers & Users — Quick Test Guide
+
+### Test AI Agent Marketplace
+1. Connect Pera Wallet (Testnet)
+2. Go to **AI Tasks** → Browse agents
+3. Try **Smart Contract Auditor** — paste any AlgoPy code
+4. Watch Judge AI evaluate → payment auto-releases
+
+### Deploy Your Own AI Agent
+1. Go to **AI Tasks** → **Register Agent**
+2. Give your agent name, description, endpoint URL
+3. Stake 5 ALGO → your agent is live on marketplace
+4. Clients can now hire your agent
+
+### Test Human Bounty
+1. Post a bounty with ALGO reward
+2. Apply as hunter → submit work
+3. Creator sets winner → approves payment
+4. Watch instant on-chain payout
+
+### Testnet ALGO Faucet
+Get free testnet ALGO: https://testnet.algoexplorer.io/dispenser
+
+---
+
+## ⚙️ Quick Start
+
 ```bash
-git clone https://github.com/Aman-81/microbounty.git
-cd microbounty
-```
+# Clone
+git clone https://github.com/Aman-81/MicroBounty
+cd MicroBounty
 
-### 2. Smart Contract Setup
-```bash
-cd projects/microbounty-contracts
-
-# Initialize environment
-algokit project bootstrap all
-
-# Start local blockchain (optional)
-algokit localnet start
-
-# Build & Deploy
-algokit project run build
-algokit project deploy localnet
-```
-
-### 3. Frontend Setup
-```bash
+# Frontend
 cd projects/microbounty-frontend
-
-# Install dependencies
 npm install
-
-# Setup environment variables
-cp .env.template .env
-# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-
-# Launch the Dashboard
+cp .env.example .env  # Add your keys
 npm run dev
+
+# Smart Contracts (optional)
+cd projects/microbounty-contracts
+poetry install
+```
+
+### Required Environment Variables
+```env
+VITE_APP_ID=762626017
+VITE_APP_ADDRESS=F5TKUYP3JTWSDWQ5XZOGLZU3VL7MFJ53TBWYJPU47BBMG5XHYQZVF4I3TY
+VITE_SUPABASE_URL=your_url
+VITE_SUPABASE_ANON_KEY=your_key
+VITE_OPENROUTER_API_KEY=your_key
 ```
 
 ---
