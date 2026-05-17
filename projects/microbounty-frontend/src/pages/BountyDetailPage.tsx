@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
-import { fetchBountyById, isBountyCreator, hasApplied, callApplyBounty, getSubmissions, markBountyPaid } from '../utils/supabase-helpers';
+import { fetchBountyById, isBountyCreator, hasApplied, callApplyBounty, getSubmissions, callSetWinners, callApprovePay, callAutoRefund } from '../utils/supabase-helpers';
 import { BountyWithApplicants, Submission, BountyStatus } from '../utils/supabase-types';
 import { formatCountdown, shortenAddress } from '../lib/utils';
 import { useTransaction } from '../hooks/useTransaction';
@@ -29,7 +29,7 @@ export default function BountyDetailPage() {
   const id = Number(bounty_id);
   const { activeAddress } = useWallet();
   const { enqueueSnackbar } = useSnackbar();
-  const { applyBounty, selectWinnerAndPay, appClient } = useTransaction();
+  const { applyBounty, setWinners, approveAndPay, autoRefund, appClient } = useTransaction();
 
   const [bounty, setBounty] = useState<BountyWithApplicants | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,11 +38,13 @@ export default function BountyDetailPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
 
+  // Winner Selection UI State
+  const [winnerSelectionMode, setWinnerSelectionMode] = useState(false);
+  const [pendingWinners, setPendingWinners] = useState<string[]>(['', '', '']);
+
   useEffect(() => {
     let mounted = true;
     
-    // 🚀 STABILITY GUARD: Only run the full sync if the ID or wallet changed
-    // appClient is memoized but we want to be extra safe against re-init loops
     const init = async () => {
       if (isNaN(id)) {
         setLoading(false);
@@ -64,11 +66,16 @@ export default function BountyDetailPage() {
             if (activeAddress === data.creator_wallet || applied) {
               const subs = await getSubmissions(id, activeAddress);
               setSubmissions(subs);
+              // Pre-fill pending winners if there are submissions
+              if (activeAddress === data.creator_wallet && subs.length > 0) {
+                 const initialWinners = ['', '', ''];
+                 subs.slice(0, 3).forEach((s, i) => initialWinners[i] = s.hunter_wallet);
+                 setPendingWinners(initialWinners);
+              }
             }
 
             // 🛡️ ON-CHAIN SYNC & SELF-HEALING
             try {
-              // 🛡️ Call the generated camelCase method
               const result = await appClient.getBounty({ 
                 args: { bountyId: BigInt(id) },
                 sender: activeAddress
@@ -79,7 +86,7 @@ export default function BountyDetailPage() {
                 
                 // If on-chain says paid but DB doesn't, heal it
                 if (onChainStatus === 'paid' && data.status !== 'paid') {
-                  await markBountyPaid(id, activeAddress);
+                  await callApprovePay(id, data.creator_wallet);
                   const subs2 = await getSubmissions(id, activeAddress);
                   setSubmissions(subs2);
                 }
@@ -100,7 +107,7 @@ export default function BountyDetailPage() {
 
     init();
     return () => { mounted = false; };
-  }, [id, activeAddress]); // Removed appClient from deps to break loop, use activeAddress stability instead
+  }, [id, activeAddress]);
 
   // GSAP Counter Animation for Reward
   useEffect(() => {
@@ -142,6 +149,7 @@ export default function BountyDetailPage() {
 
   const { text: timeRemaining, isExpired } = formatCountdown(bounty.deadline);
   const isPaid = bounty.status === 'paid';
+  const isWinnerSet = bounty.status === 'winner_set';
   const showRefund = isExpired && Number(bounty.status) < 2 && isCreator;
 
   const handleApply = async () => {
@@ -164,21 +172,78 @@ export default function BountyDetailPage() {
     }
   };
 
-  const handlePayWinner = async (hunterWallet: string) => {
+  const handleSetWinners = async () => {
+    if (!activeAddress) return;
+    const validWinners = pendingWinners.filter(w => w.trim().length > 0);
+    if (validWinners.length === 0) {
+      enqueueSnackbar('Please select at least one winner', { variant: 'warning' });
+      return;
+    }
+    // Pad to 3 addresses
+    const w1 = validWinners[0] || activeAddress;
+    const w2 = validWinners[1] || w1;
+    const w3 = validWinners[2] || w2;
+
     setActionLoading(true);
     try {
-      enqueueSnackbar('Executing Atomic Payout...', { variant: 'info' });
-      const success = await selectWinnerAndPay(id, hunterWallet, hunterWallet, hunterWallet);
+      enqueueSnackbar('Setting winners on-chain...', { variant: 'info' });
+      const success = await setWinners(id, w1, w2, w3);
       if (success) {
-        await markBountyPaid(id, activeAddress!);
-        enqueueSnackbar('Bounty Released! Winner Paid.', { variant: 'success' });
+        const winnersData = validWinners.map((w, i) => ({
+          rank: i + 1,
+          hunter_wallet: w,
+          payout_percent: bounty.payout_split[i] || 0
+        }));
+        await callSetWinners({
+          bounty_id: id,
+          winners: winnersData,
+          creator_wallet: activeAddress
+        });
+        enqueueSnackbar('Winners set successfully! Ready for final approval.', { variant: 'success' });
+        setWinnerSelectionMode(false);
         const updated = await fetchBountyById(id);
         if (updated) setBounty(updated);
-        const subs = await getSubmissions(id, activeAddress!);
-        setSubmissions(subs);
+      }
+    } catch (e: any) {
+      enqueueSnackbar(e.message || 'Failed to set winners', { variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApproveAndPay = async () => {
+    if (!activeAddress) return;
+    setActionLoading(true);
+    try {
+      enqueueSnackbar('Approving and releasing payout...', { variant: 'info' });
+      const success = await approveAndPay(id);
+      if (success) {
+        await callApprovePay(id, activeAddress);
+        enqueueSnackbar('Bounty Paid! Funds released to winners.', { variant: 'success' });
+        const updated = await fetchBountyById(id);
+        if (updated) setBounty(updated);
       }
     } catch (e: any) {
       enqueueSnackbar(e.message || 'Payment failed', { variant: 'error' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAutoRefund = async () => {
+    if (!activeAddress) return;
+    setActionLoading(true);
+    try {
+      enqueueSnackbar('Claiming refund...', { variant: 'info' });
+      const success = await autoRefund(id);
+      if (success) {
+        await callAutoRefund(id, activeAddress);
+        enqueueSnackbar('Refund successful!', { variant: 'success' });
+        const updated = await fetchBountyById(id);
+        if (updated) setBounty(updated);
+      }
+    } catch (e: any) {
+      enqueueSnackbar(e.message || 'Refund failed', { variant: 'error' });
     } finally {
       setActionLoading(false);
     }
@@ -201,7 +266,7 @@ export default function BountyDetailPage() {
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]' 
                   : 'bg-[#6D28D9]/10 border-[#6D28D9]/30 text-[#6D28D9] dark:text-[#C4A1FF] shadow-[0_0_15px_rgba(109,40,217,0.1)]'
               }`}>
-                STATUS: {bounty.status}
+                STATUS: {bounty.status.replace('_', ' ')}
               </span>
               <span className="text-gray-400 dark:text-[#64748B] font-mono text-[10px] tracking-widest uppercase">
                 IDENTIFIER: 0x{bounty.bounty_id.toString(16).padStart(4, '0')}
@@ -252,7 +317,7 @@ export default function BountyDetailPage() {
             </motion.div>
           )}
 
-          {/* Submissions Section: The Invisible Bounty History */}
+          {/* Submissions Section */}
           <AnimatePresence>
             {submissions.length > 0 && (
               <GlassCard variant="liquid" className="space-y-8 relative overflow-hidden p-8 md:p-12">
@@ -307,16 +372,6 @@ export default function BountyDetailPage() {
                           </div>
                         </div>
                       </div>
-
-                      {isCreator && (bounty.status === 'submitted' || bounty.status === 'active') && (
-                        <PremiumButton
-                          onClick={() => handlePayWinner(sub.hunter_wallet)}
-                          isLoading={actionLoading}
-                          className="w-full md:w-auto px-8"
-                        >
-                          RELEASE_ESCROW
-                        </PremiumButton>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -358,11 +413,71 @@ export default function BountyDetailPage() {
                     <span>PROTOCOL_CURATOR_ACTIVE</span>
                   </div>
                   
+                  {/* Two-step Winner Flow UI */}
+                  {(bounty.status === 'submitted' || bounty.status === 'active') && !winnerSelectionMode && submissions.length > 0 && (
+                    <PremiumButton onClick={() => setWinnerSelectionMode(true)} className="w-full text-sm">
+                      SET WINNERS
+                    </PremiumButton>
+                  )}
+
+                  {winnerSelectionMode && (
+                    <div className="p-4 bg-gray-100 dark:bg-[#1A1D24] border border-[#6D28D9]/30 rounded-2xl space-y-4">
+                      <h4 className="text-xs font-bold text-[#6D28D9] uppercase tracking-widest">Select Winners</h4>
+                      {bounty.payout_split.map((split, idx) => (
+                        split > 0 && (
+                          <div key={idx}>
+                            <label className="block text-left text-[10px] text-gray-500 mb-1">Rank {idx + 1} ({split}%)</label>
+                            <input 
+                              type="text" 
+                              value={pendingWinners[idx]}
+                              onChange={(e) => {
+                                const newWinners = [...pendingWinners];
+                                newWinners[idx] = e.target.value;
+                                setPendingWinners(newWinners);
+                              }}
+                              placeholder="Hunter Wallet Address"
+                              className="w-full text-xs p-2 rounded bg-white dark:bg-[#15171E] border border-gray-200 dark:border-[#262A36] focus:border-[#6D28D9] outline-none"
+                            />
+                          </div>
+                        )
+                      ))}
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => setWinnerSelectionMode(false)}
+                          className="flex-1 py-2 text-xs font-bold text-gray-500"
+                        >
+                          Cancel
+                        </button>
+                        <PremiumButton 
+                          onClick={handleSetWinners} 
+                          isLoading={actionLoading}
+                          className="flex-1 text-xs"
+                        >
+                          CONFIRM
+                        </PremiumButton>
+                      </div>
+                    </div>
+                  )}
+
+                  {isWinnerSet && (
+                    <PremiumButton 
+                      onClick={handleApproveAndPay} 
+                      isLoading={actionLoading}
+                      className="w-full text-sm !bg-emerald-500"
+                    >
+                      APPROVE & PAY
+                    </PremiumButton>
+                  )}
+
                   {showRefund && (
-                    <PremiumButton variant="secondary" className="w-full border-brand-error/20 text-brand-error hover:bg-brand-error/10 text-xs italic">
+                    <PremiumButton onClick={handleAutoRefund} isLoading={actionLoading} variant="secondary" className="w-full border-brand-error/20 text-brand-error hover:bg-brand-error/10 text-xs italic">
                       <RefreshCcw className="w-4 h-4 mr-2" /> RECLAIM_ESCROW
                     </PremiumButton>
                   )}
+
+                  <PremiumButton disabled className="w-full text-xs opacity-50 grayscale cursor-not-allowed" title="Coming in v2">
+                    RAISE DISPUTE
+                  </PremiumButton>
                 </div>
               ) : (
                 <div className="space-y-4">

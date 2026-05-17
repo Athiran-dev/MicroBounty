@@ -554,3 +554,190 @@ export async function hasApplied(
 
   return (count || 0) > 0;
 }
+
+
+// ═════════════════════════════════════════════════════
+// NEW SYNC HELPERS — After every successful on-chain txn
+// ═════════════════════════════════════════════════════
+
+/**
+ * After set_winners() on-chain:
+ * Insert winner records and update bounty status → 'winner_set'
+ */
+export async function callSetWinners(params: {
+  bounty_id: number;
+  winners: Array<{ rank: number; hunter_wallet: string; payout_percent: number }>;
+  creator_wallet: string;
+}): Promise<void> {
+  const supabase = getSupabase(params.creator_wallet);
+
+  // Upsert winners (idempotent)
+  if (params.winners.length > 0) {
+    await supabase
+      .from('winners')
+      .upsert(
+        params.winners.map(w => ({
+          bounty_id: params.bounty_id,
+          rank: w.rank,
+          hunter_wallet: w.hunter_wallet,
+          payout_percent: w.payout_percent,
+        })),
+        { onConflict: 'bounty_id,rank' }
+      );
+  }
+
+  // Update bounty status
+  const { error } = await supabase
+    .from('bounties')
+    .update({ status: 'winner_set' })
+    .eq('bounty_id', params.bounty_id)
+    .eq('creator_wallet', params.creator_wallet);
+
+  if (error) {
+    console.error('callSetWinners Supabase error:', error);
+    throw new Error(`Failed to sync set_winners: ${error.message}`);
+  }
+}
+
+/**
+ * After approve_and_pay() on-chain:
+ * Update bounty status → 'paid'
+ */
+export async function callApprovePay(bountyId: number, creatorWallet: string): Promise<void> {
+  const supabase = getSupabase(creatorWallet);
+
+  const { error } = await supabase
+    .from('bounties')
+    .update({ status: 'paid' })
+    .eq('bounty_id', bountyId)
+    .eq('creator_wallet', creatorWallet);
+
+  if (error) throw new Error(`Failed to sync approve_and_pay: ${error.message}`);
+}
+
+/**
+ * After auto_refund() on-chain:
+ * Update bounty status → 'refunded'
+ */
+export async function callAutoRefund(bountyId: number, callerWallet: string): Promise<void> {
+  const supabase = getSupabase(callerWallet);
+
+  const { error } = await supabase
+    .from('bounties')
+    .update({ status: 'refunded' })
+    .eq('bounty_id', bountyId);
+
+  if (error) throw new Error(`Failed to sync auto_refund: ${error.message}`);
+}
+
+/**
+ * After lock_ai_payment() on-chain:
+ * Insert ai_tasks record with status 'pending'
+ */
+export async function callAiTaskLocked(params: {
+  task_id: string;
+  agent_id: number | string;
+  client_wallet: string;
+  payment_amount_algo: number;
+  input_data: string;
+  input_type: string;
+}): Promise<void> {
+  const supabase = getSupabase(params.client_wallet);
+
+  const netToAgent = params.payment_amount_algo * 0.9;
+  const platformCut = params.payment_amount_algo * 0.1;
+
+  const { error } = await supabase
+    .from('ai_tasks')
+    .upsert({
+      task_id: params.task_id,
+      agent_id: Number(params.agent_id),
+      client_wallet: params.client_wallet,
+      input_data: params.input_data,
+      input_type: params.input_type,
+      payment_amount_algo: params.payment_amount_algo,
+      net_to_agent_algo: netToAgent,
+      platform_cut_algo: platformCut,
+      status: 'pending',
+    }, { onConflict: 'task_id' });
+
+  if (error) {
+    console.error('callAiTaskLocked Supabase error:', error);
+  }
+}
+
+/**
+ * After release_ai_payment() on-chain:
+ * Update ai_tasks status → 'paid' and increment agent stats
+ */
+export async function callAiTaskPaid(
+  taskId: string,
+  agentId: number | string,
+  clientWallet: string
+): Promise<void> {
+  const supabase = getSupabase(clientWallet);
+
+  // Update task status
+  await supabase
+    .from('ai_tasks')
+    .update({ status: 'paid', completed_at: new Date().toISOString() })
+    .eq('task_id', taskId);
+
+  // Increment agent stats
+  try {
+    await supabase.rpc('increment_agent_success', { p_agent_id: Number(agentId) });
+  } catch {
+    // Non-critical — agent stats increment may not exist as RPC
+    console.warn('increment_agent_success RPC not available, using manual update');
+    const { data: agent } = await supabase
+      .from('ai_agents')
+      .select('successful_tasks, total_tasks')
+      .eq('agent_id', Number(agentId))
+      .single();
+
+    if (agent) {
+      await supabase
+        .from('ai_agents')
+        .update({
+          successful_tasks: (agent.successful_tasks || 0) + 1,
+          total_tasks: (agent.total_tasks || 0) + 1,
+        })
+        .eq('agent_id', Number(agentId));
+    }
+  }
+}
+
+/**
+ * After refund_ai_payment() on-chain:
+ * Update ai_tasks status → 'refunded' and increment agent total_tasks
+ */
+export async function callAiTaskRefunded(
+  taskId: string,
+  agentId: number | string,
+  clientWallet: string
+): Promise<void> {
+  const supabase = getSupabase(clientWallet);
+
+  await supabase
+    .from('ai_tasks')
+    .update({ status: 'refunded', completed_at: new Date().toISOString() })
+    .eq('task_id', taskId);
+
+  try {
+    const { data: agent } = await supabase
+      .from('ai_agents')
+      .select('total_tasks')
+      .eq('agent_id', Number(agentId))
+      .single();
+
+    if (agent) {
+      await supabase
+        .from('ai_agents')
+        .update({ total_tasks: (agent.total_tasks || 0) + 1 })
+        .eq('agent_id', Number(agentId));
+    }
+  } catch {
+    console.warn('Failed to update agent total_tasks after refund');
+  }
+}
+

@@ -2,7 +2,7 @@
 // MicroBounty — Supabase TypeScript Types
 // ─────────────────────────────────────────────────────
 
-export type BountyStatus = 'open' | 'active' | 'submitted' | 'paid' | 'refunded' | 'disputed';
+export type BountyStatus = 'open' | 'active' | 'submitted' | 'winner_set' | 'paid' | 'refunded' | 'disputed';
 export type RoomStatus = 'active' | 'closed';
 
 /** Bounty record from Supabase */

@@ -84,7 +84,7 @@ export function createX402Signer(
 
         // HACK: Convert AssetTransfer (ID 0) to Payment transaction
         // The x402 library incorrectly builds axfer for native ALGO.
-        if (txn.type === algosdk.TransactionType.axfer && (txn.assetIndex === 0 || !txn.assetIndex)) {
+        if (txn.type === algosdk.TransactionType.axfer && ((txn as any).assetIndex === 0 || !(txn as any).assetIndex)) {
           console.log('[x402] 🔄 Converting AssetTransfer(0) to native Payment transaction for wallet compatibility');
 
           // Robust address extraction

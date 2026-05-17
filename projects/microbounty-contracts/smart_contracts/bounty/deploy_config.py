@@ -170,6 +170,7 @@ def deploy() -> None:
         clear_program=clear_program,
         global_schema=global_schema,
         local_schema=local_schema,
+        extra_pages=3,
     )
 
     # 9. Sign and send
@@ -182,6 +183,7 @@ def deploy() -> None:
     print("⏳ Waiting for confirmation...")
     confirmed = wait_for_confirmation(algod, txid, wait_rounds=10)
     app_id = confirmed["application-index"]
+
 
     from algosdk.logic import get_application_address
     app_address = get_application_address(app_id)

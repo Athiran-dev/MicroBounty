@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useWallet } from '@txnlab/use-wallet-react';
 import { useSnackbar } from 'notistack';
 import DashboardLayout from '../../components/DashboardLayout';
-import { Brain, CheckCircle2, ShieldCheck, Zap, FileText, Image, Video, Code, Info, Activity, LayoutGrid, CheckCircle } from 'lucide-react';
+import { Brain, CheckCircle2, ShieldCheck, Zap, FileText, Image as ImageIcon, Video, Code, Info, Activity, LayoutGrid, CheckCircle } from 'lucide-react';
 import { getSupabase } from '../../utils/supabaseClient';
 import { callJudgeAI } from '../../lib/openrouter';
 import { useAiContractMocks } from '../../hooks/useAiContractMocks';
@@ -82,8 +82,20 @@ export default function AiAgentProfile() {
         } else if (agent.agent_id === 9002) {
           return simulateAuditor(clientInput, selectedLanguage);
         } else {
-          await new Promise(res => setTimeout(res, 2000));
-          return 'Here is the result of your task based on the simulated agent logic.';
+          try {
+            const res = await fetch(agent.endpoint_url || 'https://api.example.com', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: clientInput })
+            });
+            if (!res.ok) throw new Error('Agent endpoint failed');
+            return await res.json();
+          } catch (e: any) {
+            console.error('Agent execution error:', e);
+            // Fallback for demo if endpoint is invalid
+            await new Promise(res => setTimeout(res, 2000));
+            return 'Real agent execution failed or timed out. (Check endpoint)';
+          }
         }
       };
 
@@ -92,7 +104,7 @@ export default function AiAgentProfile() {
         agent.price_per_task_algo,
         agent.agent_id,
         agentResultFn,
-        (step) => setX402Step(step)
+        (step) => setX402Step(step as any)
       );
 
       if (!x402Result) throw new Error('x402 payment flow failed');
@@ -142,10 +154,10 @@ export default function AiAgentProfile() {
 
       if (isSuccess) {
         console.log(`[Judge AI] ✅ Quality Check Passed. Releasing payment to developer...`);
-        await releaseAiPayment(taskId, agent.developer_wallet);
+        await releaseAiPayment(taskId);
       } else {
         console.log(`[Judge AI] ❌ Quality Check Failed. Refunding client...`);
-        await refundAiPayment(taskId, activeAddress);
+        await refundAiPayment(taskId);
         finalStatus = 'refunded';
       }
 
@@ -378,7 +390,7 @@ export default function AiAgentProfile() {
                     <div className="flex gap-2 mb-6">
                       {[
                         { id: 'text', icon: FileText, label: 'Text' },
-                        { id: 'image', icon: Image, label: 'Image' },
+                        { id: 'image', icon: ImageIcon, label: 'Image' },
                         { id: 'video', icon: Video, label: 'Video' },
                         { id: 'file', icon: Code, label: 'File/PDF' },
                       ].map(type => (

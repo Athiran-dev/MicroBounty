@@ -3,6 +3,10 @@ import DashboardLayout from '../../components/DashboardLayout';
 import { ShieldCheck, Plus, Settings2, ShieldAlert, TestTube2, Image as ImageIcon, Bot, Brain, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ImageUpload from '../../components/ImageUpload';
+import { useWallet } from '@txnlab/use-wallet-react';
+import { useAiContractMocks } from '../../hooks/useAiContractMocks';
+import { useSnackbar } from 'notistack';
+import { getSupabase } from '../../utils/supabaseClient';
 
 export default function RegisterAgent() {
   const [activeStep, setActiveStep] = useState(1);
@@ -16,6 +20,52 @@ export default function RegisterAgent() {
     category: 'NLP',
     preview_images: ['', '', '']
   });
+
+  const { activeAddress } = useWallet();
+  const { registerAgent } = useAiContractMocks();
+  const { enqueueSnackbar } = useSnackbar();
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!activeAddress) {
+      enqueueSnackbar('Please connect your wallet', { variant: 'error' });
+      return;
+    }
+    setLoading(true);
+    try {
+      enqueueSnackbar('Staking 100 ALGO on-chain...', { variant: 'info' });
+      // The registerAgent hook expects stake in ALGO, and price in microAlgo
+      const priceMicroAlgo = agentData.price * 1_000_000;
+      const agentId = await registerAgent(100, priceMicroAlgo);
+      
+      if (!agentId) throw new Error('Registration failed on-chain');
+
+      enqueueSnackbar('Agent registered successfully on-chain! Saving...', { variant: 'info' });
+      
+      const supabase = getSupabase(activeAddress);
+      const { error } = await supabase.from('ai_agents').insert({
+        agent_id: agentId,
+        developer_wallet: activeAddress,
+        name: agentData.name,
+        tagline: agentData.tagline,
+        description: agentData.description,
+        avatar_url: agentData.avatar_url,
+        price_per_task_algo: agentData.price,
+        endpoint_url: agentData.endpoint,
+        tech_tags: [agentData.category],
+        preview_images: agentData.preview_images.filter(Boolean)
+      });
+
+      if (error) throw error;
+      
+      enqueueSnackbar('Agent fully registered!', { variant: 'success' });
+    } catch (e: any) {
+      console.error(e);
+      enqueueSnackbar(e.message || 'Registration failed', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const steps = [
     { num: 1, label: 'Identity' },
@@ -261,13 +311,14 @@ export default function RegisterAgent() {
                   Save Draft
                 </button>
                 <button 
+                  disabled={loading}
                   onClick={() => {
                     if (activeStep < 4) setActiveStep(prev => prev + 1);
-                    else alert('Submitting registration...');
+                    else handleRegister();
                   }}
-                  className="px-8 py-3 rounded-xl bg-[#6D28D9] text-white font-bold hover:bg-[#5B21B6] transition-colors shadow-md shadow-[#6D28D9]/20"
+                  className="px-8 py-3 rounded-xl bg-[#6D28D9] text-white font-bold hover:bg-[#5B21B6] transition-colors shadow-md shadow-[#6D28D9]/20 disabled:opacity-50"
                 >
-                  {activeStep === 4 ? 'Confirm & Stake' : `Continue to ${steps[activeStep].label}`}
+                  {loading ? 'Processing...' : (activeStep === 4 ? 'Confirm & Stake' : `Continue to ${steps[activeStep].label}`)}
                 </button>
               </div>
             </div>

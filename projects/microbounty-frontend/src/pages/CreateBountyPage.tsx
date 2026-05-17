@@ -31,8 +31,9 @@ export default function CreateBountyPage() {
     ? (Number(formData.rewardAlgo) * price).toFixed(2)
     : '0.00';
 
-  const fee = (Number(formData.rewardAlgo) * 0.015).toFixed(2);
-  const totalCommitment = (Number(formData.rewardAlgo) + Number(fee)).toFixed(2);
+  const fee = (Number(formData.rewardAlgo || 0) * 0.05).toFixed(2);
+  const escrowLocked = (Number(formData.rewardAlgo || 0) * 0.95).toFixed(2);
+  const totalCommitment = Number(formData.rewardAlgo || 0).toFixed(2);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,11 +279,15 @@ export default function CreateBountyPage() {
 
                <div className="space-y-4 pt-10 border-t border-gray-200 dark:border-[#262A36]">
                  <div className="flex justify-between text-xs font-medium">
-                   <span className="text-gray-400 dark:text-[#64748B]">Platform Fee (1.5%)</span>
+                   <span className="text-gray-400 dark:text-[#64748B]">Escrow Locked (95%)</span>
+                   <span className="text-slate-300">{escrowLocked} ALGO</span>
+                 </div>
+                 <div className="flex justify-between text-xs font-medium">
+                   <span className="text-gray-400 dark:text-[#64748B]">Platform Fee (5%)</span>
                    <span className="text-slate-300">{fee} ALGO</span>
                  </div>
                  <div className="flex justify-between items-end">
-                   <span className="text-xl font-display font-black text-gray-900 dark:text-white">Total Commitment</span>
+                   <span className="text-xl font-display font-black text-gray-900 dark:text-white">You Pay</span>
                    <span className="text-2xl font-display font-black text-[#6D28D9]">{totalCommitment} <span className="text-[10px] text-gray-400 dark:text-[#64748B] tracking-widest ml-1">ALGO</span></span>
                  </div>
                </div>

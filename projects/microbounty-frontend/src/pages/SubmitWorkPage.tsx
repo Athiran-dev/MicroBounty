@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { sha256 } from 'js-sha256';
+
 import { useWallet } from '@txnlab/use-wallet-react';
 import { useSnackbar } from 'notistack';
 import { hashDeployLink } from '../lib/utils';
@@ -32,19 +32,21 @@ export default function SubmitWorkPage() {
 
   const [generatedHash, setGeneratedHash] = useState('');
 
-  // 🛡️ SHA-256 Hash Engine: Every submission must trigger a hashing function.
-  // Add logic to hash the GitHub link + User Address.
   useEffect(() => {
-    if (formData.githubLink && activeAddress) {
-      const combined = `${formData.githubLink}${activeAddress}`;
-      const hash = sha256(combined);
-      setGeneratedHash(hash);
-      // We still use a slice for the 'commitHash' field in the contract if it's too long, 
-      // but the full engine is running here.
-      setFormData(prev => ({ ...prev, commitHash: hash.substring(0, 16) }));
-    } else {
-      setGeneratedHash('');
-    }
+    const generateHash = async () => {
+      if (formData.githubLink && activeAddress) {
+        const combined = `${formData.githubLink}${activeAddress}`;
+        const msgUint8 = new TextEncoder().encode(combined);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        setGeneratedHash(hashHex);
+        setFormData(prev => ({ ...prev, commitHash: hashHex.substring(0, 16) }));
+      } else {
+        setGeneratedHash('');
+      }
+    };
+    generateHash();
   }, [formData.githubLink, activeAddress]);
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function SubmitWorkPage() {
 
     setLoading(true);
     try {
-      const hashedLink = hashDeployLink(formData.deployLink);
+      const hashedLink = await hashDeployLink(formData.deployLink);
 
       enqueueSnackbar('Sealing evidence on-chain...', { variant: 'info' });
       await submitWork(id, hashedLink, formData.githubLink, formData.commitHash);

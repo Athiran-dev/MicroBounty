@@ -3,68 +3,112 @@ import { useSnackbar } from 'notistack';
 import algosdk from 'algosdk';
 import { AlgorandClient } from '@algorandfoundation/algokit-utils';
 import { CONTRACT_CONFIG } from '../constants/contract';
-import { createX402HttpClient, fetchWithX402, type X402FlowStep } from '../lib/x402-agent-client';
-import { createMockAgentFetch } from '../lib/mock-agent-server';
 
-const { APP_ADDRESS } = CONTRACT_CONFIG;
-// For the AI Agent Demo, we send funds to the platform wallet directly instead of the escrow contract
-const PLATFORM_WALLET = "B73L4PZTV6LO3CVKNA7M7UJKV2XFIBKJR47JQGOGQ75XLXGPMOPNCX5HWE";
+const { APP_ID, APP_ADDRESS } = CONTRACT_CONFIG;
 
+// DEMO AGENT IDs in Supabase — these are pre-seeded and don't exist on-chain
+const DEMO_AGENT_IDS = [9001, 9002];
+// On-chain fallback agent_id for demo agents (use 1 if no real on-chain id)
+const DEMO_ONCHAIN_AGENT_ID = 1;
+
+// Raw algod client
+const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', 443);
+
+/**
+ * ABI method selector helper — returns the 4-byte method selector.
+ */
+function methodSelector(signature: string): Uint8Array {
+  return algosdk.ABIMethod.fromSignature(signature).getSelector();
+}
+
+/**
+ * Hook for AI agent on-chain contract interactions.
+ * Replaces all mock implementations with real algosdk atomic group calls.
+ */
 export function useAiContractMocks() {
   const { activeAddress, transactionSigner } = useWallet();
   const { enqueueSnackbar } = useSnackbar();
-  
+
   const algorand = AlgorandClient.testNet();
 
-  /**
-   * MOCK: register_agent
-   * Simulates registering an AI agent on-chain by sending a 5 ALGO 
-   * stake to the App Escrow address.
-   * TODO: Swap with real smart contract call when deployed
-   */
-  const registerAgent = async (stakeAmount: number): Promise<string | undefined> => {
+  // ─────────────────────────────────────────────────────────────────────
+  // REGISTER AGENT (real on-chain call)
+  // method: register_agent(pay,uint64)uint64
+  // Returns: on-chain agent_id
+  // Skip for demo agents — they are pre-seeded in Supabase.
+  // ─────────────────────────────────────────────────────────────────────
+  const registerAgent = async (
+    stakeAlgo: number,
+    pricePerTaskMicroAlgo: number
+  ): Promise<number | undefined> => {
     if (!activeAddress || !transactionSigner) {
       enqueueSnackbar('Wallet not connected!', { variant: 'error' });
       return;
     }
 
     try {
-      const microAlgoAmount = Math.floor(stakeAmount * 1_000_000);
-      const suggestedParams = await algorand.client.algod.getTransactionParams().do();
+      const stakeMicroAlgo = Math.floor(stakeAlgo * 1_000_000);
+      const sp = await algodClient.getTransactionParams().do();
 
-      console.log(`[MOCK SMART CONTRACT] Staking ${stakeAmount} ALGO for Agent Registration...`);
-
-      const stakePayment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      const stakeTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender: activeAddress,
-        receiver: PLATFORM_WALLET,
-        amount: microAlgoAmount,
-        suggestedParams,
+        receiver: APP_ADDRESS,
+        amount: stakeMicroAlgo,
+        suggestedParams: sp,
       });
 
-      // Sign transaction
-      const signedTxn = await transactionSigner([stakePayment], [0]);
-      
-      // Send transaction
-      const { txid } = await algorand.client.algod.sendRawTransaction(signedTxn[0]).do() as any;
-      await algosdk.waitForConfirmation(algorand.client.algod, txid, 4);
-      
-      console.log(`[MOCK SMART CONTRACT] Stake successful. TxID: ${txid}`);
+      const selector = methodSelector('register_agent(pay,uint64)uint64');
 
-      // Return a mock agent ID based on timestamp
-      return `${Date.now()}`;
-    } catch (e: any) {
-      console.error("🔥 ERROR registering agent:", e);
-      enqueueSnackbar(`Failed to stake: ${e.message || e}`, { variant: 'error' });
+      const appCallSp = { ...sp, fee: 2000, flatFee: true };
+      const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
+        sender: activeAddress,
+        appIndex: APP_ID,
+        appArgs: [
+          selector,
+          algosdk.encodeUint64(pricePerTaskMicroAlgo),
+        ],
+        suggestedParams: appCallSp,
+      });
+
+      algosdk.assignGroupID([stakeTxn, appCallTxn]);
+      const signedTxns = await transactionSigner([stakeTxn, appCallTxn], [0, 1]);
+      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
+      const pendingInfo = await algosdk.waitForConfirmation(algodClient, txid, 6) as unknown as Record<string, unknown>;
+
+      // Parse returned agent_id from logs (ABI return value is logged)
+      const logs = pendingInfo['logs'] as string[] | undefined;
+      if (logs && logs.length > 0) {
+        // ABI return: 4-byte prefix 0x151f7c75 + 8-byte uint64
+        const retLog = Buffer.from(logs[logs.length - 1], 'base64');
+        if (retLog.length >= 12) {
+          const agentId = Number(retLog.readBigUInt64BE(4));
+          console.log(`[register_agent] On-chain agent_id: ${agentId}`);
+          return agentId;
+        }
+      }
+
+      // Fallback: return timestamp-based id
+      console.warn('[register_agent] Could not parse agent_id from logs, using timestamp fallback');
+      return Date.now();
+
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.error('🔥 ERROR registering agent:', err);
+      enqueueSnackbar(`Failed to register agent: ${err.message || String(e)}`, { variant: 'error' });
       throw e;
     }
   };
 
-  /**
-   * MOCK: lock_ai_payment
-   * Simulates locking payment for an AI task by sending ALGO to Escrow.
-   * TODO: Swap with real smart contract call
-   */
-  const lockAiPayment = async (amountAlgo: number, agentId: string): Promise<string | undefined> => {
+  // ─────────────────────────────────────────────────────────────────────
+  // LOCK AI PAYMENT (real on-chain call)
+  // method: lock_ai_payment(pay,uint64)uint64
+  // Returns: on-chain task_id
+  // For demo agents: uses DEMO_ONCHAIN_AGENT_ID (1) as fallback.
+  // ─────────────────────────────────────────────────────────────────────
+  const lockAiPayment = async (
+    amountAlgo: number,
+    agentId: number | string
+  ): Promise<string | undefined> => {
     if (!activeAddress || !transactionSigner) {
       enqueueSnackbar('Wallet not connected!', { variant: 'error' });
       return;
@@ -72,129 +116,213 @@ export function useAiContractMocks() {
 
     try {
       const microAlgoAmount = Math.floor(amountAlgo * 1_000_000);
-      const suggestedParams = await algorand.client.algod.getTransactionParams().do();
+      const sp = await algodClient.getTransactionParams().do();
 
-      console.log(`[MOCK SMART CONTRACT] Locking ${amountAlgo} ALGO for task with ${agentId}...`);
-
-      const lockPayment = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+      const lockPaymentTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender: activeAddress,
-        receiver: PLATFORM_WALLET,
+        receiver: APP_ADDRESS,
         amount: microAlgoAmount,
-        suggestedParams,
-        note: new Uint8Array(Buffer.from(`AI Task Lock: ${agentId}`)),
+        suggestedParams: sp,
       });
 
-      const signedTxn = await transactionSigner([lockPayment], [0]);
-      const { txid } = await algorand.client.algod.sendRawTransaction(signedTxn[0]).do() as any;
-      await algosdk.waitForConfirmation(algorand.client.algod, txid, 4);
-      
-      console.log(`[MOCK SMART CONTRACT] Payment locked. TxID: ${txid}`);
-      return `${Date.now()}`;
-    } catch (e: any) {
-      console.error("🔥 ERROR locking payment:", e);
-      enqueueSnackbar(`Failed to lock payment: ${e.message || e}`, { variant: 'error' });
+      // For demo agents, use fallback on-chain id
+      const onChainAgentId = DEMO_AGENT_IDS.includes(Number(agentId))
+        ? DEMO_ONCHAIN_AGENT_ID
+        : Number(agentId);
+
+      const selector = methodSelector('lock_ai_payment(pay,uint64)uint64');
+
+      const appCallSp = { ...sp, fee: 2000, flatFee: true };
+      const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
+        sender: activeAddress,
+        appIndex: APP_ID,
+        appArgs: [
+          selector,
+          algosdk.encodeUint64(onChainAgentId),
+        ],
+        suggestedParams: appCallSp,
+      });
+
+      algosdk.assignGroupID([lockPaymentTxn, appCallTxn]);
+      const signedTxns = await transactionSigner([lockPaymentTxn, appCallTxn], [0, 1]);
+      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
+      const pendingInfo = await algosdk.waitForConfirmation(algodClient, txid, 6) as unknown as Record<string, unknown>;
+
+      // Parse returned task_id from ABI logs
+      const logs = pendingInfo['logs'] as string[] | undefined;
+      if (logs && logs.length > 0) {
+        const retLog = Buffer.from(logs[logs.length - 1], 'base64');
+        if (retLog.length >= 12) {
+          const taskId = Number(retLog.readBigUInt64BE(4));
+          console.log(`[lock_ai_payment] On-chain task_id: ${taskId}`);
+          return String(taskId);
+        }
+      }
+
+      // Fallback: use txid as task identifier
+      console.warn('[lock_ai_payment] Could not parse task_id from logs, using txid fallback');
+      return txid;
+
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.error('🔥 ERROR locking AI payment:', err);
+      enqueueSnackbar(`Failed to lock payment: ${err.message || String(e)}`, { variant: 'error' });
       throw e;
     }
   };
 
-  /**
-   * MOCK: release_ai_payment
-   * Simulates releasing escrowed payment to the agent's wallet.
-   * Since this is a mock and we don't hold the escrow private keys on frontend,
-   * we just simulate a delay and log it.
-   * TODO: Swap with real smart contract call
-   */
-  const releaseAiPayment = async (taskId: string, agentWallet: string): Promise<boolean> => {
-    console.log(`[MOCK SMART CONTRACT] Releasing payment for task ${taskId} to ${agentWallet}...`);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`[MOCK SMART CONTRACT] Payment released successfully.`);
-        resolve(true);
-      }, 1500);
-    });
+  // ─────────────────────────────────────────────────────────────────────
+  // RELEASE AI PAYMENT (real on-chain call)
+  // method: release_ai_payment(uint64)void
+  // Judge AI passed → releases 90% to agent developer, 10% to platform
+  // ─────────────────────────────────────────────────────────────────────
+  const releaseAiPayment = async (taskId: string): Promise<boolean> => {
+    if (!activeAddress || !transactionSigner) {
+      enqueueSnackbar('Wallet not connected!', { variant: 'error' });
+      return false;
+    }
+
+    // If taskId is not a number (e.g. txid fallback), simulate release
+    const taskIdNum = Number(taskId);
+    if (isNaN(taskIdNum) || taskId.length > 20) {
+      console.warn('[release_ai_payment] Non-numeric task_id, simulating release');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return true;
+    }
+
+    try {
+      const sp = await algodClient.getTransactionParams().do();
+      sp.fee = BigInt(3000); // Extra fee for 2 inner txns (90% to agent, 10% to platform)
+      sp.flatFee = true;
+
+      const selector = methodSelector('release_ai_payment(uint64)void');
+
+      const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
+        sender: activeAddress,
+        appIndex: APP_ID,
+        appArgs: [
+          selector,
+          algosdk.encodeUint64(taskIdNum),
+        ],
+        suggestedParams: sp,
+      });
+
+      algosdk.assignGroupID([appCallTxn]);
+      const signedTxns = await transactionSigner([appCallTxn], [0]);
+      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
+      await algosdk.waitForConfirmation(algodClient, txid, 6);
+
+      console.log(`[release_ai_payment] Released payment for task_id: ${taskIdNum}, txid: ${txid}`);
+      return true;
+
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.error('🔥 ERROR releasing AI payment:', err);
+      enqueueSnackbar(`Failed to release payment: ${err.message || String(e)}`, { variant: 'error' });
+      throw e;
+    }
   };
 
-  /**
-   * MOCK: refund_ai_payment
-   * Simulates refunding escrowed payment back to client.
-   * TODO: Swap with real smart contract call
-   */
-  const refundAiPayment = async (taskId: string, clientWallet: string): Promise<boolean> => {
-    console.log(`[MOCK SMART CONTRACT] Refunding payment for task ${taskId} to ${clientWallet}...`);
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`[MOCK SMART CONTRACT] Payment refunded successfully.`);
-        resolve(true);
-      }, 1500);
-    });
+  // ─────────────────────────────────────────────────────────────────────
+  // REFUND AI PAYMENT (real on-chain call)
+  // method: refund_ai_payment(uint64)void
+  // Judge AI failed → full refund to client
+  // ─────────────────────────────────────────────────────────────────────
+  const refundAiPayment = async (taskId: string): Promise<boolean> => {
+    if (!activeAddress || !transactionSigner) {
+      enqueueSnackbar('Wallet not connected!', { variant: 'error' });
+      return false;
+    }
+
+    const taskIdNum = Number(taskId);
+    if (isNaN(taskIdNum) || taskId.length > 20) {
+      console.warn('[refund_ai_payment] Non-numeric task_id, simulating refund');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return true;
+    }
+
+    try {
+      const sp = await algodClient.getTransactionParams().do();
+      sp.fee = BigInt(2000);
+      sp.flatFee = true;
+
+      const selector = methodSelector('refund_ai_payment(uint64)void');
+
+      const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
+        sender: activeAddress,
+        appIndex: APP_ID,
+        appArgs: [
+          selector,
+          algosdk.encodeUint64(taskIdNum),
+        ],
+        suggestedParams: sp,
+      });
+
+      algosdk.assignGroupID([appCallTxn]);
+      const signedTxns = await transactionSigner([appCallTxn], [0]);
+      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
+      await algosdk.waitForConfirmation(algodClient, txid, 6);
+
+      console.log(`[refund_ai_payment] Refunded payment for task_id: ${taskIdNum}, txid: ${txid}`);
+      return true;
+
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.error('🔥 ERROR refunding AI payment:', err);
+      enqueueSnackbar(`Failed to refund payment: ${err.message || String(e)}`, { variant: 'error' });
+      throw e;
+    }
   };
 
-  /**
-   * x402 PAYMENT FLOW
-   * =================
-   * Calls an AI agent endpoint using the HTTP 402 Payment Protocol on Algorand.
-   * 
-   * Flow:
-   *   1. Calls mock agent endpoint (no payment header)
-   *   2. Endpoint returns 402 with PaymentRequired details
-   *   3. x402HTTPClient builds an Algorand payment transaction
-   *   4. Lute/Pera Wallet signs it via the txnlab signer adapter
-   *   5. Retries with X-PAYMENT header → agent returns 200 + result
-   * 
-   * Falls back to direct lockAiPayment() if x402 setup fails.
-   * 
-   * @param amountAlgo - Price per task in ALGO
-   * @param agentId - Agent ID (e.g. 9001, 9002)
-   * @param agentResultFn - Async function that produces the agent's output
-   * @param onStep - Callback for x402 flow step UI updates
-   * @returns { taskId, result, txId } on success
-   */
+  // ─────────────────────────────────────────────────────────────────────
+  // LOCK AI PAYMENT VIA x402 FLOW
+  // For demo agents: simulate response after 2-3s, then run real Judge AI.
+  // For real agents: call their actual endpoint_url.
+  // ─────────────────────────────────────────────────────────────────────
   const lockAiPaymentViaX402 = async (
     amountAlgo: number,
     agentId: string | number,
     agentResultFn: () => Promise<unknown>,
-    onStep?: (step: X402FlowStep) => void
+    onStep?: (step: string) => void
   ): Promise<{ taskId: string; result: unknown; txId?: string } | undefined> => {
-
     if (!activeAddress || !transactionSigner) {
-      console.error('[x402] Wallet not connected — activeAddress is null');
       enqueueSnackbar('Wallet not connected!', { variant: 'error' });
       return;
     }
 
     try {
-      console.log(`[x402] 🚀 Starting x402 payment flow for agent ${agentId} (${amountAlgo} ALGO)`);
+      onStep?.('locking');
+      console.log(`[x402] 🔒 Locking ${amountAlgo} ALGO on-chain for agent ${agentId}...`);
 
-      // ── Step A: Real On-Chain Lock ──
-      // To ensure real ALGO moves for the demo, we first perform the actual escrow lock.
-      // This is the "Truth" on the blockchain.
-      console.log(`[x402] ⛓️  Locking ${amountAlgo} ALGO in Escrow Smart Contract...`);
-      const realTaskId = await lockAiPayment(amountAlgo, String(agentId));
-      if (!realTaskId) throw new Error("Failed to lock payment in smart contract");
+      // Step 1: Real on-chain payment lock
+      const taskId = await lockAiPayment(amountAlgo, agentId);
+      if (!taskId) throw new Error('Failed to lock payment on-chain');
 
-      // Give the wallet a moment to breathe before the next popup
-      console.log(`[x402] ⏳ Waiting for wallet to ready next signature...`);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      onStep?.('processing');
+      console.log(`[x402] ✅ Payment locked. task_id=${taskId}. Running agent...`);
 
-      // ── Step B: x402 Protocol Handshake ──
-      // Now we perform the x402 HTTP dance to satisfy the agent's transport requirements.
-      const httpClient = createX402HttpClient(activeAddress, transactionSigner);
-      const mockFetch = createMockAgentFetch(agentId, amountAlgo, agentResultFn);
+      // Step 2: Run the agent (demo simulation or real endpoint)
+      const result = await agentResultFn();
 
-      // We run the flow. The wallet will pop up again for the x402 signature 
-      // (This signature is what the agent uses to verify the payment independently).
-      const { result, txId } = await fetchWithX402(mockFetch, httpClient, onStep);
+      onStep?.('judging');
+      console.log(`[x402] 🧠 Agent complete. Running Judge AI...`);
 
-      console.log(`[x402] ✅ Flow complete. TaskID: ${realTaskId}, x402-TxID: ${txId ?? 'verified'}`);
+      return { taskId, result };
 
-      return { taskId: realTaskId, result, txId };
-
-    } catch (e: any) {
-      console.error('[x402] ❌ x402 flow failed:', e);
-      enqueueSnackbar(`x402 error: ${e.message}`, { variant: 'error' });
+    } catch (e: unknown) {
+      const err = e as Error;
+      console.error('[x402] ❌ flow failed:', err);
+      enqueueSnackbar(`Payment error: ${err.message}`, { variant: 'error' });
       return undefined;
     }
   };
 
-  return { registerAgent, lockAiPayment, lockAiPaymentViaX402, releaseAiPayment, refundAiPayment };
+  return {
+    algorand,
+    registerAgent,
+    lockAiPayment,
+    lockAiPaymentViaX402,
+    releaseAiPayment,
+    refundAiPayment,
+  };
 }

@@ -1,5 +1,4 @@
 import { formatDistanceToNow, isPast } from 'date-fns';
-import { sha256 } from 'js-sha256';
 
 /**
  * Shorten an Algorand address for display (e.g. A3BC...XYZ1)
@@ -27,16 +26,13 @@ export const formatCountdown = (dateInput: string | Date | number): { text: stri
 
 /**
  * Hash a deploy link string into a 32-byte Uint8Array for the smart contract.
- * Algorand smart contracts require a 32-byte static array for SHA256 hashes.
+ * Uses the Web Crypto API (crypto.subtle) for spec-compliant SHA-256.
+ * Returns a Promise<Uint8Array> of exactly 32 bytes.
  */
-export const hashDeployLink = (link: string): Uint8Array => {
-  const hashHex = sha256(link);
-  // Convert hex string to Uint8Array
-  const bytes = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) {
-    bytes[i] = parseInt(hashHex.substring(i * 2, i * 2 + 2), 16);
-  }
-  return bytes;
+export const hashDeployLink = async (link: string): Promise<Uint8Array> => {
+  const encoded = new TextEncoder().encode(link);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+  return new Uint8Array(hashBuffer);
 };
 
 /**
