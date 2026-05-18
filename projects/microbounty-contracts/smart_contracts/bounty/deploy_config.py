@@ -73,6 +73,7 @@ def compile_contract() -> tuple[bytes, bytes]:
         ["algokit", "compile", "py", str(contract_path)],
         capture_output=True,
         text=True,
+        shell=True,
     )
 
     if result.returncode != 0:
@@ -155,7 +156,7 @@ def deploy() -> None:
     print("✅ Bytecode ready\n")
 
     # 6. State schema — BoxMap needs no global/local state except counter
-    global_schema = StateSchema(num_uints=1, num_byte_slices=0)
+    global_schema = StateSchema(num_uints=4, num_byte_slices=1)
     local_schema  = StateSchema(num_uints=0, num_byte_slices=0)
 
     # 7. Suggested params
