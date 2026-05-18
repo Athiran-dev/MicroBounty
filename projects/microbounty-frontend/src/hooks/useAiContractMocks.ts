@@ -31,6 +31,20 @@ export function useAiContractMocks() {
 
   const algorand = AlgorandClient.testNet();
 
+  // Helper to fetch global counter for box IDs
+  const getNextGlobalCounter = async (key: string): Promise<number> => {
+    const appState = await algodClient.getApplicationByID(APP_ID).do();
+    const globalState = appState.params['global-state'] || [];
+    const counterKey = Buffer.from(key).toString('base64');
+    const counterState = globalState.find((s: any) => s.key === counterKey);
+    return (counterState ? counterState.value.uint : 0) + 1;
+  };
+
+  // Helper to construct box name (prefix + uint64)
+  const makeBoxName = (prefix: string, id: number): Uint8Array => {
+    return new Uint8Array([...Buffer.from(prefix), ...algosdk.encodeUint64(id)]);
+  };
+
   // ─────────────────────────────────────────────────────────────────────
   // REGISTER AGENT (real on-chain call)
   // method: register_agent(pay,uint64)uint64
@@ -59,6 +73,8 @@ export function useAiContractMocks() {
 
       const selector = methodSelector('register_agent(pay,uint64)uint64');
 
+      const nextAgentId = await getNextGlobalCounter('ag_counter');
+
       const appCallSp = { ...sp, fee: 2000, flatFee: true };
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
@@ -66,6 +82,9 @@ export function useAiContractMocks() {
         appArgs: [
           selector,
           algosdk.encodeUint64(pricePerTaskMicroAlgo),
+        ],
+        boxes: [
+          { appIndex: APP_ID, name: makeBoxName('ag_', nextAgentId) }
         ],
         suggestedParams: appCallSp,
       });
@@ -132,6 +151,8 @@ export function useAiContractMocks() {
 
       const selector = methodSelector('lock_ai_payment(pay,uint64)uint64');
 
+      const nextTaskId = await getNextGlobalCounter('t_counter');
+
       const appCallSp = { ...sp, fee: 2000, flatFee: true };
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
@@ -139,6 +160,10 @@ export function useAiContractMocks() {
         appArgs: [
           selector,
           algosdk.encodeUint64(onChainAgentId),
+        ],
+        boxes: [
+          { appIndex: APP_ID, name: makeBoxName('ag_', onChainAgentId) },
+          { appIndex: APP_ID, name: makeBoxName('t_', nextTaskId) },
         ],
         suggestedParams: appCallSp,
       });
@@ -197,12 +222,22 @@ export function useAiContractMocks() {
 
       const selector = methodSelector('release_ai_payment(uint64)void');
 
+      // We need the agent_id from the task box to include the agent box.
+      const taskBoxName = makeBoxName('t_', taskIdNum);
+      const boxResponse = await algodClient.getApplicationBoxByName(APP_ID, taskBoxName).do();
+      const agentIdArray = boxResponse.value.slice(32, 40);
+      const agentIdNum = Number(algosdk.decodeUint64(agentIdArray, 'safe'));
+
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
         appIndex: APP_ID,
         appArgs: [
           selector,
           algosdk.encodeUint64(taskIdNum),
+        ],
+        boxes: [
+          { appIndex: APP_ID, name: taskBoxName },
+          { appIndex: APP_ID, name: makeBoxName('ag_', agentIdNum) }
         ],
         suggestedParams: sp,
       });
@@ -248,12 +283,17 @@ export function useAiContractMocks() {
 
       const selector = methodSelector('refund_ai_payment(uint64)void');
 
+      const taskBoxName = makeBoxName('t_', taskIdNum);
+
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
         appIndex: APP_ID,
         appArgs: [
           selector,
           algosdk.encodeUint64(taskIdNum),
+        ],
+        boxes: [
+          { appIndex: APP_ID, name: taskBoxName }
         ],
         suggestedParams: sp,
       });
