@@ -92,8 +92,9 @@ export function useAiContractMocks() {
 
       algosdk.assignGroupID([stakeTxn, appCallTxn]);
       const signedTxns = await transactionSigner([stakeTxn, appCallTxn], [0, 1]);
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
-      const pendingInfo = await algosdk.waitForConfirmation(algodClient, txid, 6) as unknown as Record<string, unknown>;
+      await algodClient.sendRawTransaction(signedTxns).do();
+      const appCallTxId = appCallTxn.txID().toString();
+      const pendingInfo = await algosdk.waitForConfirmation(algodClient, appCallTxId, 6) as unknown as Record<string, unknown>;
 
       // Parse returned agent_id from logs (ABI return value is logged)
       const logs = pendingInfo['logs'] as string[] | undefined;
@@ -169,8 +170,9 @@ export function useAiContractMocks() {
 
       algosdk.assignGroupID([lockPaymentTxn, appCallTxn]);
       const signedTxns = await transactionSigner([lockPaymentTxn, appCallTxn], [0, 1]);
-      const { txid } = await algodClient.sendRawTransaction(signedTxns).do() as { txid: string };
-      const pendingInfo = await algosdk.waitForConfirmation(algodClient, txid, 6) as unknown as Record<string, unknown>;
+      await algodClient.sendRawTransaction(signedTxns).do();
+      const appCallTxId = appCallTxn.txID().toString();
+      const pendingInfo = await algosdk.waitForConfirmation(algodClient, appCallTxId, 6) as unknown as Record<string, unknown>;
 
       // Parse returned task_id from ABI logs
       const logs = pendingInfo['logs'] as string[] | undefined;
@@ -185,7 +187,7 @@ export function useAiContractMocks() {
 
       // Fallback: use txid as task identifier
       console.warn('[lock_ai_payment] Could not parse task_id from logs, using txid fallback');
-      return txid;
+      return appCallTxId;
 
     } catch (e: unknown) {
       const err = e as Error;
