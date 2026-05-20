@@ -6,10 +6,11 @@ import { CONTRACT_CONFIG } from '../constants/contract';
 
 const { APP_ID, APP_ADDRESS } = CONTRACT_CONFIG;
 
-// DEMO AGENT IDs in Supabase — these are pre-seeded and don't exist on-chain
-const DEMO_AGENT_IDS = [9001, 9002];
-// On-chain fallback agent_id for demo agents (use 1 if no real on-chain id)
-const DEMO_ONCHAIN_AGENT_ID = 1;
+// Map Supabase DEMO AGENT IDs to their on-chain counterparts
+const DEMO_AGENT_MAP: Record<number, number> = {
+  9001: 1,
+  9002: 2,
+};
 
 // Raw algod client
 const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', 443);
@@ -144,10 +145,8 @@ export function useAiContractMocks() {
         suggestedParams: sp,
       });
 
-      // For demo agents, use fallback on-chain id
-      const onChainAgentId = DEMO_AGENT_IDS.includes(Number(agentId))
-        ? DEMO_ONCHAIN_AGENT_ID
-        : Number(agentId);
+      // For demo agents, use mapped on-chain id
+      const onChainAgentId = DEMO_AGENT_MAP[Number(agentId)] || Number(agentId);
 
       const selector = methodSelector('lock_ai_payment(pay,uint64)uint64');
 
