@@ -35,10 +35,18 @@ export function useAiContractMocks() {
   // Helper to fetch global counter for box IDs
   const getNextGlobalCounter = async (key: string): Promise<number> => {
     const appState = await algodClient.getApplicationByID(APP_ID).do();
-    const globalState = appState.params['global-state'] || [];
-    const counterKey = Buffer.from(key).toString('base64');
-    const counterState = globalState.find((s: any) => s.key === counterKey);
-    return (counterState ? counterState.value.uint : 0) + 1;
+    const globalState = appState.params.globalState || appState.params['global-state'] || [];
+    const counterState = globalState.find((s: any) => {
+      let sKeyStr = '';
+      if (s.key instanceof Uint8Array) {
+        sKeyStr = Buffer.from(s.key).toString();
+      } else if (typeof s.key === 'string') {
+        sKeyStr = Buffer.from(s.key, 'base64').toString();
+      }
+      return sKeyStr === key;
+    });
+    if (!counterState) return 1;
+    return Number(counterState.value.uint) + 1;
   };
 
   // Helper to construct box name (prefix + uint64)
