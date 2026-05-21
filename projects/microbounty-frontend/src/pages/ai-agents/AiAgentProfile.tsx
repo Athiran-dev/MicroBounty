@@ -160,10 +160,10 @@ export default function AiAgentProfile() {
 
       if (isSuccess) {
         console.log(`[Judge AI] ✅ Quality Check Passed. Releasing payment to developer...`);
-        await releaseAiPayment(taskId);
+        releaseAiPayment(taskId).catch((err) => console.error("On-chain release failed:", err));
       } else {
         console.log(`[Judge AI] ❌ Quality Check Failed. Refunding client...`);
-        await refundAiPayment(taskId);
+        refundAiPayment(taskId).catch((err) => console.error("On-chain refund failed:", err));
         finalStatus = 'refunded';
       }
 
