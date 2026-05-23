@@ -35,7 +35,7 @@ export function useAiContractMocks() {
   // Helper to fetch global counter for box IDs
   const getNextGlobalCounter = async (key: string): Promise<number> => {
     const appState = await algodClient.getApplicationByID(APP_ID).do();
-    const globalState = appState.params.globalState || appState.params['global-state'] || [];
+    const globalState = appState.params.globalState || (appState.params as any)['global-state'] || [];
     const counterState = globalState.find((s: any) => {
       let sKeyStr = '';
       if (s.key instanceof Uint8Array) {
@@ -245,7 +245,7 @@ export function useAiContractMocks() {
 
       // Fetch platform address from global state
       const appState = await algodClient.getApplicationByID(APP_ID).do();
-      const globalState = appState.params.globalState || appState.params['global-state'] || [];
+      const globalState = appState.params.globalState || (appState.params as any)['global-state'] || [];
       const platformState = globalState.find((s: any) => {
         let sKeyStr = '';
         if (s.key instanceof Uint8Array) {
