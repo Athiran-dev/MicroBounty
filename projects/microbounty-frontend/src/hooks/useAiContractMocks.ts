@@ -237,6 +237,32 @@ export function useAiContractMocks() {
       const agentIdArray = boxResponse.value.slice(32, 40);
       const agentIdNum = Number(algosdk.decodeUint64(agentIdArray, 'safe'));
 
+      // Fetch developer address from agent box
+      const agentBoxName = makeBoxName('ag_', agentIdNum);
+      const agentBoxResponse = await algodClient.getApplicationBoxByName(APP_ID, agentBoxName).do();
+      const developerBytes = agentBoxResponse.value.slice(0, 32);
+      const developerAddress = algosdk.encodeAddress(developerBytes);
+
+      // Fetch platform address from global state
+      const appState = await algodClient.getApplicationByID(APP_ID).do();
+      const globalState = appState.params.globalState || appState.params['global-state'] || [];
+      const platformState = globalState.find((s: any) => {
+        let sKeyStr = '';
+        if (s.key instanceof Uint8Array) {
+          sKeyStr = Buffer.from(s.key).toString();
+        } else if (typeof s.key === 'string') {
+          sKeyStr = Buffer.from(s.key, 'base64').toString();
+        }
+        return sKeyStr === 'platform';
+      });
+      let platformAddress = '';
+      if (platformState) {
+        const bytes = platformState.value.bytes instanceof Uint8Array
+          ? platformState.value.bytes
+          : Buffer.from(platformState.value.bytes, 'base64');
+        platformAddress = algosdk.encodeAddress(bytes);
+      }
+
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
         appIndex: APP_ID,
@@ -246,8 +272,9 @@ export function useAiContractMocks() {
         ],
         boxes: [
           { appIndex: APP_ID, name: taskBoxName },
-          { appIndex: APP_ID, name: makeBoxName('ag_', agentIdNum) }
+          { appIndex: APP_ID, name: agentBoxName }
         ],
+        accounts: [developerAddress, platformAddress].filter(Boolean),
         suggestedParams: sp,
       });
 
@@ -293,6 +320,9 @@ export function useAiContractMocks() {
       const selector = methodSelector('refund_ai_payment(uint64)void');
 
       const taskBoxName = makeBoxName('t_', taskIdNum);
+      const taskBoxResponse = await algodClient.getApplicationBoxByName(APP_ID, taskBoxName).do();
+      const clientBytes = taskBoxResponse.value.slice(0, 32);
+      const clientAddress = algosdk.encodeAddress(clientBytes);
 
       const appCallTxn = algosdk.makeApplicationNoOpTxnFromObject({
         sender: activeAddress,
@@ -304,6 +334,7 @@ export function useAiContractMocks() {
         boxes: [
           { appIndex: APP_ID, name: taskBoxName }
         ],
+        accounts: [clientAddress],
         suggestedParams: sp,
       });
 
