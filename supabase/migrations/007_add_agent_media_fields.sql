@@ -37,14 +37,14 @@ USING (bucket_id = 'agent-assets');
 UPDATE public.ai_agents 
 SET 
   avatar_url = '/newUpdatedUi/agent1.png',
-  preview_images = '["/newUpdatedUi/AiAgentMarketPlace.png", "/newUpdatedUi/AIAgentProfile.png", "/newUpdatedUi/DeployingAiAgent.png"]'::jsonb
+  preview_images = '[]'::jsonb
 WHERE agent_id = 9001;
 
 UPDATE public.ai_agents 
 SET 
   avatar_url = '/newUpdatedUi/agent2.png',
   price_per_task_algo = 10,
-  preview_images = '["/newUpdatedUi/AIAgentProfile.png", "/newUpdatedUi/AiAgentMarketPlace.png", "/newUpdatedUi/DeployingAiAgent.png"]'::jsonb
+  preview_images = '[]'::jsonb
 WHERE agent_id = 9002;
 
 -- Set a dynamic default avatar for any other existing agents that don't have one

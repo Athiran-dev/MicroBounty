@@ -202,7 +202,7 @@ export default function AiAgentProfile() {
 
   return (
     <DashboardLayout showSidebar={false}>
-      <div className="bg-[#12141C] min-h-screen pt-12 pb-24 text-gray-900 dark:text-white font-sans">
+      <div className="bg-[#12141C] min-h-screen pt-12 pb-24 text-white font-sans">
       <div className="max-w-6xl mx-auto px-6">
         
         <div className="flex flex-col lg:flex-row gap-12">
@@ -379,13 +379,13 @@ export default function AiAgentProfile() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => taskStatus === 'idle' && setIsModalOpen(false)} />
           
-          <div className="bg-[#15171E] border border-[#262A36] rounded-3xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-[#15171E] border border-[#262A36] rounded-3xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] text-white">
             <div className="p-6 border-b border-[#262A36] flex justify-between items-center bg-[#1A1D24]">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
                 <Brain className="w-6 h-6 text-[#C4A1FF]" /> New Task: {agent.name}
               </h2>
               {taskStatus === 'idle' && (
-                <button onClick={() => setIsModalOpen(false)} className="text-[#64748B] hover:text-gray-900 dark:text-white">&times;</button>
+                <button onClick={() => setIsModalOpen(false)} className="text-[#64748B] hover:text-white">&times;</button>
               )}
             </div>
 
@@ -424,7 +424,7 @@ export default function AiAgentProfile() {
                           <select 
                             value={selectedLanguage}
                             onChange={(e) => setSelectedLanguage(e.target.value)}
-                            className="w-full bg-[#1A1D24] border border-[#262A36] rounded-lg p-2 text-gray-900 dark:text-white text-sm outline-none focus:border-[#C4A1FF]"
+                            className="w-full bg-[#1A1D24] border border-[#262A36] rounded-lg p-2 text-white text-sm outline-none focus:border-[#C4A1FF]"
                           >
                             <option>AlgoPy</option>
                             <option>PyTeal</option>
@@ -437,7 +437,7 @@ export default function AiAgentProfile() {
                           <select 
                             value={auditFocus}
                             onChange={(e) => setAuditFocus(e.target.value)}
-                            className="w-full bg-[#1A1D24] border border-[#262A36] rounded-lg p-2 text-gray-900 dark:text-white text-sm outline-none focus:border-[#C4A1FF]"
+                            className="w-full bg-[#1A1D24] border border-[#262A36] rounded-lg p-2 text-white text-sm outline-none focus:border-[#C4A1FF]"
                           >
                             <option>Full Audit</option>
                             <option>Security Only</option>
@@ -451,7 +451,7 @@ export default function AiAgentProfile() {
                           value={clientInput}
                           onChange={e => setClientInput(e.target.value)}
                           rows={12}
-                          className="w-full bg-[#1A1D24] border border-[#262A36] rounded-xl p-4 text-gray-900 dark:text-white focus:border-[#C4A1FF] outline-none resize-none font-mono text-xs leading-relaxed"
+                          className="w-full bg-[#1A1D24] border border-[#262A36] rounded-xl p-4 text-white focus:border-[#C4A1FF] outline-none resize-none font-mono text-xs leading-relaxed"
                           placeholder="Paste your smart contract code here..."
                         />
                       </div>
@@ -465,14 +465,14 @@ export default function AiAgentProfile() {
                         value={clientInput}
                         onChange={e => setClientInput(e.target.value)}
                         rows={6}
-                        className="w-full bg-[#1A1D24] border border-[#262A36] rounded-xl p-4 text-gray-900 dark:text-white focus:border-[#C4A1FF] outline-none resize-none font-mono text-sm"
+                        className="w-full bg-[#1A1D24] border border-[#262A36] rounded-xl p-4 text-white focus:border-[#C4A1FF] outline-none resize-none font-mono text-sm"
                         placeholder={agent.agent_id === 9001 ? "Paste the research text here..." : "Enter your task requirements here..."}
                       />
                     </div>
                   )}
 
                   <div className="bg-[#12141C] rounded-xl p-4 border border-[#262A36] mb-6">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Payment Breakdown</h4>
+                    <h4 className="text-sm font-bold text-white mb-3">Payment Breakdown</h4>
                     <div className="flex justify-between text-sm mb-2 text-[#94A3B8]">
                       <span>Agent Execution:</span>
                       <span>{agent.price_per_task_algo * 0.9} ALGO</span>
@@ -482,7 +482,7 @@ export default function AiAgentProfile() {
                       <span>{agent.price_per_task_algo * 0.1} ALGO</span>
                     </div>
                     <div className="flex justify-between text-sm font-bold border-t border-[#262A36] pt-2">
-                      <span className="text-gray-900 dark:text-white">Total to Lock:</span>
+                      <span className="text-white">Total to Lock:</span>
                       <span className="text-[#C4A1FF]">{agent.price_per_task_algo} ALGO</span>
                     </div>
                   </div>
@@ -497,7 +497,7 @@ export default function AiAgentProfile() {
               ) : taskStatus !== 'completed' ? (
                 <div className="py-6 flex flex-col items-center justify-center text-center">
                   <div className="w-14 h-14 border-4 border-[#C4A1FF]/30 border-t-[#C4A1FF] rounded-full animate-spin mb-4" />
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                  <h3 className="text-lg font-bold text-white mb-1">
                     {taskStatus === 'locking' && 'Processing x402 Payment...'}
                     {taskStatus === 'processing' && 'Agent is processing your task...'}
                     {taskStatus === 'judging' && 'Judge AI is verifying the output...'}
@@ -535,7 +535,7 @@ export default function AiAgentProfile() {
                   </div>
 
                   <div className="bg-[#1A1D24] border border-[#262A36] rounded-xl p-6 overflow-hidden">
-                    <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-wider flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-white mb-6 uppercase tracking-wider flex items-center gap-2">
                       <Zap className="w-4 h-4 text-[#C4A1FF]" /> Agent Output
                     </h4>
                     
@@ -544,7 +544,7 @@ export default function AiAgentProfile() {
                     ) : agent.agent_id === 9002 ? (
                       <AuditorDisplay output={taskResult.output} />
                     ) : (
-                      <div className="prose prose-invert max-w-none font-mono text-sm">
+                      <div className="prose prose-invert max-w-none font-mono text-sm text-white">
                         {typeof taskResult.output === 'string' ? taskResult.output : JSON.stringify(taskResult.output, null, 2)}
                       </div>
                     )}
@@ -558,7 +558,7 @@ export default function AiAgentProfile() {
                           setClientInput('');
                           setIsModalOpen(false);
                         }}
-                        className="bg-[#262A36] hover:bg-[#334155] text-gray-900 dark:text-white px-6 py-2 rounded-lg font-bold transition-colors"
+                        className="bg-[#262A36] hover:bg-[#334155] text-white px-6 py-2 rounded-lg font-bold transition-colors"
                       >
                         Close
                       </button>
@@ -584,13 +584,13 @@ function DocuMindDisplay({ output }: { output: DocuMindOutput }) {
         <h5 className="text-[#C4A1FF] font-bold text-xs uppercase mb-2 tracking-widest flex items-center gap-2">
           <Zap className="w-3 h-3" /> TL;DR Summary
         </h5>
-        <p className="text-gray-900 dark:text-white text-lg leading-relaxed">{output.summary}</p>
+        <p className="text-white text-lg leading-relaxed">{output.summary}</p>
       </div>
       <div className="space-y-4">
         <h5 className="text-[#94A3B8] font-bold text-xs uppercase tracking-widest">Key Findings</h5>
         <ul className="space-y-3">
           {output.key_findings.map((finding, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-gray-900 dark:text-white bg-[#15171E] p-3 rounded-xl border border-[#262A36]">
+            <li key={i} className="flex items-start gap-3 text-sm text-white bg-[#15171E] p-3 rounded-xl border border-[#262A36]">
               <CheckCircle2 className="w-4 h-4 text-[#00FF9D] shrink-0 mt-0.5" />
               {finding}
             </li>
@@ -619,7 +619,7 @@ function AuditorDisplay({ output }: { output: AuditorOutput }) {
         </h5>
         <div className="grid grid-cols-1 gap-3">
           {output.vulnerabilities.map((v, i) => (
-            <div key={i} className="border border-[#262A36] rounded-xl overflow-hidden bg-[#12141C] p-4 text-gray-900 dark:text-white text-sm">
+            <div key={i} className="border border-[#262A36] rounded-xl overflow-hidden bg-[#12141C] p-4 text-white text-sm">
               <span className="text-red-400 font-bold">{v.type}</span> - {v.description}
             </div>
           ))}
